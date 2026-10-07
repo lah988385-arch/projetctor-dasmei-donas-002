@@ -1,0 +1,21 @@
+{
+  "summary": "Validated bug fix for session persistence (sessionStorage) in PGMEI iframe app. All 8 scenarios passed: initial login with 37411286000108 shows LUCI SCHIAVI..., 3 consecutive page reloads keep user logged in (no login screen), Sair clears session and reload stays on login, re-login with 33648223000119 shows SILVANI GONCALVES MACHADO (no leak from previous session), direct access to /pgmei3.html in a clean browser context redirects to /pgmei.html, Emitir Guia -> Inicio preserves CNPJ, year combo has 2021-2026.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "pgmei-shared.js: ajustarLinksNavbar attaches a click listener on 'Sair' to clear sessionStorage but the href is also set to /pgmei.html. Works correctly, but note: if a user middle-clicks or opens Sair in a new tab, sessionStorage won't be cleared because the click listener won't fire; however this is acceptable for the study clone.",
+    "pgmei.html DOMContentLoaded redirects to /pgmei2.html when sessionStorage has 14-digit CNPJ. Good. Uses window.location.replace so back-button doesn't trap user on login."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100% (8/8)"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Session persistence via sessionStorage ('pgmei_cnpj') is working across refresh, logout clears it, route protection on /pgmei3.html works in clean context. All regressions (dropdown, year combo 2021-2026, nav links) still pass."
+}

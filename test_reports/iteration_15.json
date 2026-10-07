@@ -1,0 +1,45 @@
+{
+  "summary": "Iteration 15 validated the new Liquidado/Devedor/A Vencer rule, the new PIX endpoint, auto-apuração of open debts when pas is empty, and the new /pgmei6.html PIX screen. 32/35 backend tests pass. Frontend flow (pgmei4 -> pgmei5/pgmei6, copiar PIX, layout, aviso de estudo) works end-to-end for 2026/CNPJ 40570199000108.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET /api/apuracao/{cnpj}/{ano} and GET /api/das/{pix,pdf,gerados}/{cnpj}/{ano}?pas=",
+        "issue": "Regra 'devedores = 2 últimos vencidos' é aplicada POR ANO (dentro dos 12 meses do próprio ano-calendário) em vez de considerar o universo global de vencidos até hoje. Consequência: para 2024 (todos os 12 meses vencidos há >1 ano) Novembro/2024 e Dezembro/2024 vêm como Devedor; GET /api/das/pix/40570199000108/2024?pas= responde 200 (valor 205,10) em vez de 400 'Não há débitos em aberto neste ano-calendário'. O mesmo ocorre em /das/pdf e /das/gerados. Fix sugerido em server.py apuracao(): calcular 'vencidos' globalmente (todos os anos até hoje) e marcar como Devedor apenas os 2 PAs cujo vencimento é o 1º/2º mais recente globalmente — se nenhum deles pertencer ao ano consultado, nenhum período do ano fica Devedor.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_apuracao.py",
+    "/app/backend/tests/test_pix_e_auto.py",
+    "/app/backend/tests/test_das_pdf.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Corrigir server.py apuracao(): considerar os 2 últimos vencidos GLOBAIS (incluindo outros anos) ao marcar Devedor, para que anos antigos sem débito recente retornem apenas Liquidado — e com isso /api/das/pix|pdf|gerados retorne 400 'Não há débitos em aberto' para esses anos.",
+    "Após o fix, re-rodar os 3 testes test_pix_e_auto.py::test_*_ano_sem_debitos_retorna_400 para confirmar."
+  ],
+  "critical_code_review_comments": [
+    "server.py: a regra de 'Devedor' depende de 'date.today()'; validar que o relógio do container (atualmente 01/10/2026) condiz com o ambiente de estudo — do contrário o resultado muda a cada dia.",
+    "das_pdf.py: SELIC_MENSAL hardcoded (0.010841). Em produção isso precisaria vir da apuração oficial; para estudo está ok.",
+    "codigo_pix_estudo(): o payload BR Code usa 'DOCUMENTO DE ESTUDO' no campo 59 (nome do beneficiário) + chave inexistente 'estudo@pgmei.invalido' — correto para garantir que o QR não é pagável. CRC16 implementado conforme especificação EMV.",
+    "pgmei4.html: botão Pagar Online e Apurar DAS usam page.evaluate click porque ladda/overlay bloqueia clicks nativos — isso é esperado em testes automatizados, não um bug."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_apuracao.py (reescrito para a nova regra Liquidado/Devedor/A Vencer)",
+    "/app/backend/tests/test_pix_e_auto.py (novo arquivo para o endpoint PIX e auto-apuração)",
+    "/app/backend/tests/test_das_pdf.py (atualizados juros consolidados 2,53/262,75 e dois testes de pas vazio para refletir auto-apuração)"
+  ],
+  "success_rate": {"backend": "91% (32/35)", "frontend": "100% (12/12 asserts)"},
+  "seed_data_creation": "nenhum",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend está correto para 2026 (Jan-Jun Liquidado, Jul/Aug Devedor 95,13+85,57=180,70, Sep-Dec A Vencer R$ 82,05). O frontend pgmei6 está perfeito — QR+dados lado a lado, botão Copiar funciona, aviso de estudo presente, voltar/imprimir funcionam. O único defeito pendente é a regra 'devedores por ano' que precisa ser globalizada para que anos sem débito atual (ex: 2024) retornem 400 nos endpoints /das/*. Após esse fix, re-rodar o pytest completo deve dar 35/35 verde.",
+  "rca of the issue": "server.py apuracao() faz 'vencidos = [mes for mes,v in vencimentos.items() if v < hoje]' usando apenas os vencimentos do ano consultado. Depois pega os 2 últimos desse subset. Isso significa que QUALQUER ano com >=2 meses vencidos sempre terá exatamente 2 Devedores. Para a semântica correta ('2 últimos vencidos globalmente'), é preciso calcular os vencimentos de uma janela maior (ex: do ano consultado + anos anteriores próximos) e marcar como Devedor apenas se um PA do ano estiver entre os 2 mais recentes globais. Reprodução: curl /api/das/pix/40570199000108/2024?pas=&dt=01/10/2026 → 200 (deveria ser 400)."
+}

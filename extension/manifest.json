@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Importar PGMEI",
+  "version": "1.0.0",
+  "description": "Importa os períodos de apuração reais do PGMEI para o seu PGMEI de estudo, usando a sua própria sessão da Receita.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": [
+    "https://www8.receita.fazenda.gov.br/*",
+    "https://*.preview.emergentagent.com/*",
+    "https://*.emergent.host/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Importar PGMEI",
+    "default_icon": {"48": "icon48.png", "128": "icon128.png"}
+  },
+  "icons": {"48": "icon48.png", "128": "icon128.png"},
+  "content_scripts": [
+    {
+      "matches": ["https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

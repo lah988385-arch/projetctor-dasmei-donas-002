@@ -1,0 +1,373 @@
+/* ===========================================================================
+   PGMEI — CSS do Bootstrap 3 internalizado (subset necessário) + tema Receita.
+   Reconstruído para fidelidade visual, sem dependências externas.
+   =========================================================================== */
+
+/* ---- Base / reset (Bootstrap 3) ------------------------------------------ */
+.pgmei-root,
+.pgmei-root * {
+  box-sizing: border-box;
+}
+.pgmei-root {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #333;
+  background-color: #fff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Grid (Bootstrap 3) --------------------------------------------------- */
+.container {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+.container-fluid {
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+@media (min-width: 768px) { .container { width: 750px; } }
+@media (min-width: 992px) { .container { width: 970px; } }
+@media (min-width: 1200px) { .container { width: 1170px; } }
+
+.row {
+  margin-right: -15px;
+  margin-left: -15px;
+}
+.row::after { content: ""; display: table; clear: both; }
+
+.col-md-5, .col-md-8, .col-md-11, .col-md-12 {
+  position: relative;
+  min-height: 1px;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+@media (min-width: 992px) {
+  .col-md-5 { float: left; width: 41.66666667%; }
+  .col-md-8 { float: left; width: 66.66666667%; }
+  .col-md-11 { float: left; width: 91.66666667%; }
+  .col-md-12 { float: left; width: 100%; }
+  .col-md-offset-3 { margin-left: 25%; }
+  .col-md-offset-1 { margin-left: 8.33333333%; }
+}
+
+/* ---- Well ----------------------------------------------------------------- */
+.well {
+  min-height: 20px;
+  padding: 19px;
+  margin-bottom: 20px;
+  background-color: #f5f5f5;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+/* ---- Panel (Bootstrap 3) -------------------------------------------------- */
+.panel {
+  margin-bottom: 20px;
+  background-color: #fff;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+.panel-default { border-color: #ddd; }
+.panel-heading {
+  padding: 10px 15px;
+  border-bottom: 1px solid transparent;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+.panel-default > .panel-heading {
+  color: #333;
+  background-color: #f5f5f5;
+  border-color: #ddd;
+}
+.panel-title {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 16px;
+  color: inherit;
+  font-weight: 500;
+}
+.panel-body {
+  padding: 15px;
+}
+.panel-body::after { content: ""; display: table; clear: both; }
+
+/* ---- Forms (Bootstrap 3) -------------------------------------------------- */
+.form-group { margin-bottom: 15px; }
+.control-label {
+  display: inline-block;
+  max-width: 100%;
+  margin-bottom: 5px;
+  font-weight: 700;
+}
+.form-control {
+  display: block;
+  width: 100%;
+  height: 34px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #555;
+  background-color: #fff;
+  background-image: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+}
+.form-control:focus {
+  border-color: #66afe9;
+  outline: 0;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
+}
+.form-control.input-error {
+  border-color: #a94442;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 6px #ce8483;
+}
+.help-block {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #a94442;
+}
+
+/* ---- Buttons (Bootstrap 3 btn-success) ------------------------------------ */
+.btn {
+  display: inline-block;
+  margin-bottom: 0;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  touch-action: manipulation;
+  cursor: pointer;
+  user-select: none;
+  background-image: none;
+  border: 1px solid transparent;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  border-radius: 4px;
+}
+.btn-success {
+  color: #fff;
+  background-color: #5cb85c;
+  border-color: #4cae4c;
+}
+.btn-success:hover,
+.btn-success:focus {
+  color: #fff;
+  background-color: #449d44;
+  border-color: #398439;
+}
+.btn-success:active {
+  background-color: #398439;
+  border-color: #255625;
+}
+.btn.disabled,
+.btn[disabled] {
+  cursor: not-allowed;
+  opacity: 0.65;
+  box-shadow: none;
+}
+
+/* ---- Ladda-style button (slide-left spinner) ------------------------------ */
+.ladda-button {
+  position: relative;
+  overflow: hidden;
+}
+.ladda-button .ladda-label {
+  position: relative;
+  z-index: 2;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+.ladda-button .ladda-spinner {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  opacity: 0;
+  pointer-events: none;
+}
+.ladda-button.loading .ladda-label {
+  transform: translateX(-10px);
+}
+.ladda-button.loading .ladda-spinner {
+  opacity: 1;
+}
+.ladda-spinner::after {
+  content: "";
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ladda-spin 0.6s linear infinite;
+}
+@keyframes ladda-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- Cabeçalho verde (faixa fiel ao Simples Nacional) --------------------- */
+.pgmei-header {
+  background: #4d7f1e;
+  background: linear-gradient(to bottom, #5a8f29 0%, #4d7f1e 100%);
+  border-bottom: 3px solid #f0ad00;
+  color: #fff;
+}
+.pgmei-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+}
+.pgmei-brand {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  border-right: 1px solid rgba(255, 255, 255, 0.35);
+  padding-right: 16px;
+}
+.pgmei-brand-gov {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+.pgmei-brand-org {
+  font-size: 15px;
+  font-weight: 700;
+}
+.pgmei-header-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+@media (min-width: 768px) {
+  .pgmei-header-title { font-size: 18px; }
+}
+
+/* Barra de topo cinza fina (gov.br) */
+.pgmei-topbar {
+  background: #1c1c1c;
+  color: #e6e6e6;
+  font-size: 11px;
+}
+.pgmei-topbar-inner {
+  padding: 4px 0;
+  letter-spacing: 1px;
+}
+
+/* ---- Captcha mock --------------------------------------------------------- */
+.pgmei-captcha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #d3d3d3;
+  background: #fafafa;
+  border-radius: 3px;
+  padding: 10px 12px;
+  max-width: 300px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+.pgmei-captcha input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+.pgmei-captcha-label {
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  flex: 1;
+}
+.pgmei-captcha-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #9a9a9a;
+  font-size: 9px;
+  line-height: 1.2;
+  text-align: center;
+}
+.pgmei-captcha-logo strong { font-size: 10px; color: #777; }
+
+/* ---- Alertas de resposta -------------------------------------------------- */
+.pgmei-root form::after { content: ""; display: table; clear: both; }
+.pgmei-alert {
+  clear: both;
+  margin-top: 16px;
+  padding: 12px 15px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.pgmei-alert-success {
+  color: #3c763d;
+  background-color: #dff0d8;
+  border-color: #d6e9c6;
+}
+.pgmei-alert-danger {
+  color: #a94442;
+  background-color: #f2dede;
+  border-color: #ebccd1;
+}
+
+/* ---- Rodapé --------------------------------------------------------------- */
+.pgmei-footer {
+  margin-top: auto;
+  background: #f5f5f5;
+  border-top: 1px solid #e3e3e3;
+  color: #777;
+  font-size: 12px;
+}
+.pgmei-footer-inner {
+  padding: 14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pgmei-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #4d7f1e;
+}
+.pgmei-selo-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4d7f1e;
+  display: inline-block;
+}
+
+/* Aviso de estudo */
+.pgmei-study-note {
+  font-size: 12px;
+  color: #8a6d3b;
+  background: #fcf8e3;
+  border: 1px solid #faebcc;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 15px auto 0;
+  max-width: 970px;
+}

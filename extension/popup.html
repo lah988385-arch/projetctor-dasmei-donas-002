@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { color-scheme: light; }
+  body { width: 330px; margin: 0; font: 13px/1.45 -apple-system, "Segoe UI", Arial, sans-serif; color: #2f3b33; background: #fff; }
+  header { background: #4a7729; color: #fff; padding: 12px 14px; }
+  header strong { display: block; font-size: 15px; letter-spacing: .2px; }
+  header span { font-size: 11px; opacity: .85; }
+  main { padding: 14px; }
+  label { display: block; font-weight: 600; margin: 10px 0 4px; font-size: 12px; }
+  input, select { width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid #c9d2c6; border-radius: 4px; font: inherit; }
+  .linha { display: flex; gap: 8px; }
+  .linha > div { flex: 1; }
+  .check { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; }
+  .check input { width: auto; }
+  button { width: 100%; margin-top: 14px; padding: 9px; border: 0; border-radius: 4px; background: #4a7729; color: #fff; font-weight: 600; cursor: pointer; }
+  button:disabled { background: #a9bd99; cursor: default; }
+  button.secundario { background: #eceee9; color: #44503f; margin-top: 8px; }
+  #log { margin-top: 12px; max-height: 190px; overflow: auto; border-top: 1px solid #eceee9; padding-top: 8px; font-size: 12px; }
+  #log div { padding: 3px 0; border-bottom: 1px dotted #f0f0ec; }
+  .ok { color: #2d7a35; }
+  .erro { color: #b5312b; }
+  details { margin-top: 12px; font-size: 12px; }
+  summary { cursor: pointer; color: #4a7729; }
+</style>
+</head>
+<body>
+<header>
+  <strong>Importar PGMEI</strong>
+  <span>Lê os seus períodos reais e envia para o app de estudo</span>
+</header>
+<main>
+  <label for="cnpj">CNPJ</label>
+  <input id="cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" autocomplete="off">
+
+  <div class="linha">
+    <div>
+      <label for="de">De</label>
+      <select id="de"></select>
+    </div>
+    <div>
+      <label for="ate">Até</label>
+      <select id="ate"></select>
+    </div>
+  </div>
+
+  <div class="check">
+    <input type="checkbox" id="auto" checked>
+    <label for="auto" style="margin:0;font-weight:400">Enviar o CNPJ automaticamente (1 captcha só)</label>
+  </div>
+
+  <button id="importar">Importar</button>
+  <button id="parar" class="secundario">Parar</button>
+
+  <div id="log"></div>
+
+  <details>
+    <summary>Configurações</summary>
+    <label for="api">Endereço do app de estudo</label>
+    <input id="api" placeholder="https://seu-app.preview.emergentagent.com">
+    <button id="salvar" class="secundario">Salvar endereço</button>
+  </details>
+</main>
+<script src="popup.js"></script>
+</body>
+</html>

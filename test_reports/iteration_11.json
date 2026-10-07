@@ -1,0 +1,22 @@
+{
+  "summary": "Validated the new 2s loading overlay and the no-flash fix on /pgmei3.html. Clicked 'Emitir Guia de Pagamento (DAS)' from pgmei2.html and performed rapid polling (~90ms, ~31 samples over 3s). nav .dropdown-menu NEVER appeared visible (0/31) and the empty combo box NEVER appeared visible before the user opens it (0/31). The #pg-loading overlay was visible across all samples in the early window 0.3-0.8s (6/6) and mid window 1.2-1.8s (7/7), and no longer visible in the late window 2.4-3.0s (0/6). After the overlay disappeared, #pg-cnpj and #pg-nome were correctly populated (37.411.286/0001-08 / LUCI SCHIAVI DA SILVA 42017335215), no 'Carregando...' or '--' leaked. Opening 'Consulta Extrato/Pendências' showed the 3 disabled items styled as grey (rgb(204,204,204)), not browser-default blue links. Combo Ano-Calendário loads closed, opens on click with years 2021-2026, 2024 selectable. Ok button regressions pass: empty year => red banner 'Informe o Ano-Calendário antes de continuar.'; with year => is-loading spinner then banner 'Apuração do ano-calendário 2024 ainda não disponível nesta versão de estudo.'",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "pgmei3.html is a very large single file (SingleFile dump). Fine for the study clone but any future maintenance should avoid duplicating critical CSS by moving it into pgmei-shared.css only.",
+    "window.PGMEI.esconderCarregando is called via setTimeout(2000) after DOMContentLoaded; if window.PGMEI.init() redirects to /pgmei.html when there's no CNPJ, the overlay would stay forever. Low risk because getCnpj restores from sessionStorage, but worth noting."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Overlay fix verified at iteration 11. If re-testing, poll at ~80-120ms immediately after clicking 'Emitir Guia' link to catch any menu/combo flash. Use CNPJ 37411286000108 directly in URL (pgmei2.html?cnpj=...) to bypass hCaptcha-style login button if needed.",
+  "rca of the issue": "Original bug caused by shared CSS being loaded at end of file so, before first paint, pgmei3.html lacked '.dropdown-menu>li>a' rules (removed by SingleFile) and showed un-styled blue nav links + empty white combo. Fix: critical CSS inlined in <head> (hides .dropdown-menu by default) + full-screen #pg-loading overlay inserted as first body child (visible by default on page 3, hidden by class pg-oculto on page 2), also triggered on 'Emitir Guia' click via mostrarCarregando, hidden after 2000ms via esconderCarregando on page 3's DOMContentLoaded. Verified: no flash, overlay timing correct, dropdown items styled."
+}

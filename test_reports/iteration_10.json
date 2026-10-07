@@ -1,0 +1,21 @@
+{
+  "summary": "Frontend-only testing focused on the 'placeholder flash' bug fix (CNPJ: -- / Nome: Carregando...). Used fast polling (~80-100ms) over several seconds right after navigation and refresh to catch any momentary flash. All 5 targeted scenarios PASS: (1) login with 33648223000119 -> first visible state is already '33.648.223/0001-19' + 'SILVANI GONCALVES MACHADO 26267405869' at t=2220ms (login spinner respected >=2s minimum); (2) full page reload with active session -> first sample at t=3ms already shows correct CNPJ/Nome, no flash; (3) navigation to pgmei3 (Emitir DAS) -> first sample at t=3ms already correct; (4) logout clears sessionStorage (pgmei_cnpj=null, pgmei_nome=null) and login with 37411286000108 shows 'LUCI SCHIAVI DA SILVA 42017335215' with ZERO leak of the previous SILVANI name in any sample; (5) regression invalid CNPJ 11111111111111 keeps user on pgmei.html with red error banner 'CNPJ inválido. Verifique os dígitos informados.'. The inline sessionStorage-prefill script on pgmei2.html / pgmei3.html and the Promise.all([consulta, minimo2s]) gating on pgmei.html are working as designed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fix is solid: pre-fetching name on login page in parallel with the 2s spinner avoids showing the inner page until data is ready; sessionStorage cache + inline fill-on-first-paint eliminates refresh/navigation flash; encerrarSessao() correctly removes pgmei_cnpj, pgmei_nome and pgmei_cnpj_fmt."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100% (5/5)"},
+  "test_credentials": "N/A - CNPJs: 33648223000119 (SILVANI...), 37411286000108 (LUCI...)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Flash bug fix fully verified via rapid polling (80-100ms) of #pg-cnpj and #pg-nome. If regression testing is needed in future, reuse the sampling approach: open iframe[data-testid=pgmei-frame], then poll textContent of #pg-cnpj and #pg-nome right after click/navigate/reload - any sample containing '--' or 'Carregando...' indicates a regression."
+}

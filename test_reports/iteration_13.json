@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 13 focused on the new POST /api/das/pdf endpoint and the Apurar/Gerar DAS download flow in pgmei4.html. Added /app/backend/tests/test_das_pdf.py with 7 cases (single-period PDF, 2-page multi-period, invalid CNPJ, empty períodos, período fora do ano, consulta-cnpj uf, ano 2024 INSS 70,60). Entire suite (test_das_pdf + regression test_apuracao/test_cnpj/test_identificacao) is 22/22 passing. Frontend scenarios validated with Playwright: red banner when no período selected, spinner during request, 2-page download for 202608+202609 with correct filename, and 12-page PDF for CNPJ 37411286000108 via #selecionarTodos. Downloaded PDFs confirmed with pdfplumber (12 pages / 147 108 bytes, 2 pages / 86 555 bytes). GET /api/consulta-cnpj now returns uf='RN' for Maria Janiere. Watermark 'DOCUMENTO DE ESTUDO' and the explicit 'NÃO PAGÁVEL' note are present on every page.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_das_pdf.py",
+    "/app/test_reports/pytest/all.xml",
+    "/app/test_reports/pytest/das_pdf.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "das_pdf.py is self-contained and ~370 lines (acceptable). The watermark is drawn at 10% opacity but still interleaves with extracted text; this is purely a text-extraction artifact and not a visual issue.",
+    "server.py /api/das/pdf correctly validates CNPJ, períodos, and ano membership. It also persists an audit record in db.das_gerados — good.",
+    "Mock reminder: código de barras, linha digitável e QR Code são determinísticos mas não pagáveis (declarado em marca d'água e aviso vermelho na página)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_das_pdf.py"
+  ],
+  "success_rate": {"backend": "100% (22/22)", "frontend": "100% (3/3 scenarios)"},
+  "test_credentials": "N/A — fluxo público, CNPJs de estudo (40570199000108, 37411286000108)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression lives under /app/backend/tests/. The DAS PDF tests normalize the text extracted by pdfplumber because the rotated watermark injects isolated single capital letters and extra spaces into values (e.g. '82 ,05' or '2, U 67'). The _normalize helper in test_das_pdf.py handles this; keep it when adding new assertions. Downloaded sample PDFs can be inspected under /tmp/dl_pdf after the Playwright run."
+}

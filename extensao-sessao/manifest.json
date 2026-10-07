@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "DonasPainel — Importar PGMEI",
+  "version": "2.5.0",
+  "description": "Lê os valores reais do PGMEI na sua sessão logada e envia ao painel. Roda no seu navegador autenticado — sem burlar nada.",
+  "permissions": ["storage", "scripting", "activeTab"],
+  "host_permissions": [
+    "https://*.receita.fazenda.gov.br/*",
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "DonasPainel — Importar PGMEI"
+  },
+  "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
+}

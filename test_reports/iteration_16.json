@@ -1,0 +1,24 @@
+{
+  "summary": "RETESTE do fix HIGH da iteração 15 (devedores calculados GLOBALMENTE, não por ano). Backend: 35/35 pytest passam, incluindo os 3 testes que antes falhavam (test_pix/pdf/gerados_ano_sem_debitos_retorna_400). Validação manual para anos 2021, 2022, 2023, 2024, 2025: todos retornam exclusivamente 'Liquidado' em /api/apuracao e HTTP 400 ('Não há débitos em aberto neste ano-calendário.') nos três endpoints /api/das/{pix,pdf,gerados} com pas vazio. Seleção explícita continua funcionando (pas=202401&dt=01/10/2026 retorna 200 com 1 período). Sem regressão em 2026: Jan-Jun Liquidado, Jul/Ago Devedor (R$95,13+R$85,57=180,70) e Set-Dez A Vencer. Frontend validado: pgmei4?ano=2026 mostra 2 .situacaoPa.devedor, btnPagarOnline habilitado; 'Apurar/Gerar DAS' sem seleção navega para pgmei5 com 2 linhas (Julho/2026 e Agosto/2026); 'Pagar Online' sem seleção leva a pgmei6 com #pix-valor='R$ 180,70'. Em pgmei4?ano=2024 (0 devedores), clicar em btnEmitirDas e btnPagarOnline exibe o banner #pgmei-banner com 'Não há débitos em aberto. Selecione ao menos um período de apuração.' e NÃO navega.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_pix_e_auto.py",
+    "/app/backend/tests/test_das_pdf.py",
+    "/app/backend/tests/test_apuracao.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py apuracao(): a varredura global range(hoje.year-1, hoje.year+2) tem janela de 3 anos — suficiente enquanto a regra PGMEI (6 anos de prescrição) não for implementada; o comentário no código deixa isso claro.",
+    "server.py: todas as rotas retornam o mongo _id corretamente excluído (pydantic models); nenhuma issue de serialização observada."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "N/A (CNPJ público 40570199000108)",
+  "seed_data_creation": "nenhuma",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Data do servidor é 01/10/2026 (fake-time no container). Rode pytest com REACT_APP_BACKEND_URL exportado: `export REACT_APP_BACKEND_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2) && pytest backend/tests/ -v`. Fix da iteração 15 confirmado: devedores agora são globais, aplicando-se somente aos 2 últimos vencidos (Jul/2026 e Ago/2026 nesta janela temporal); todo ano anterior/posterior fica 100% Liquidado/A Vencer.",
+  "rca of the issue": "Antes do fix, apuracao() calculava 'os 2 últimos vencidos' por ano consultado, fazendo com que anos antigos (ex. 2024) herdassem Nov/Dez como 'Devedor' indevidamente e os endpoints /das/{pix,pdf,gerados} com pas vazio retornassem 200. Fix aplicado em server.py linhas 252-259: candidatos passam a varrer range(hoje.year-1, hoje.year+2), ordenam por vencimento desc, e set(candidatos[:2]) só marca os 2 globais mais recentes como Devedor. Confirmado via pytest (3 testes antes falhando passam) e exploração manual para anos 2021-2025."
+}

@@ -1,0 +1,37 @@
+{
+  "summary": "Teste completo do painel administrativo /donaspainel: backend (18/18 pytest OK) + frontend Playwright (13/13 passos OK). Login admin, proteção de rotas, dashboard, faturas, sessão com reconfirmação de senha (403/200), motor status, consulta automática (recusada/em_andamento), download da extensão e regressão do app público validados. Fluxo UI do modal de confirmação de senha funcionando conforme esperado — tentativa com senha errada mantém o modal (403), senha correta salva e mostra toast de sucesso com badge Ativa.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard (/donaspainel)", "issues": ["Console warning do Recharts: 'width(-1) and height(-1) of chart should be greater than 0' — gráfico de série de acessos pode não renderizar corretamente em certos layouts. Verificar ResponsiveContainer com altura explícita."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_painel.py",
+    "/app/test_reports/pytest/admin_painel.xml"
+  ],
+  "action_items": [
+    "Opcional: definir altura explícita no ResponsiveContainer do gráfico do Dashboard para eliminar o warning do Recharts."
+  ],
+  "critical_code_review_comments": [
+    "admin_painel.py usa sessão gov.br persistida em MongoDB com _id='atual' — correto, exclui ObjectId implicitamente pois usa chave fixa.",
+    "verificar_senha compara senha em texto plano (os.environ['ADMIN_PASSWORD']). Para um painel real seria recomendável bcrypt, mas para este clone de estudo é aceitável; sem hash em DB.",
+    "Dashboard faz 14 count_documents sequenciais para a série de acessos — pode virar gargalo em escala, considerar aggregate com $group por dia.",
+    "Sessão com cookie em texto plano no banco — ok para estudo, mas deveria criptografar em cenário real."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_painel.py (novo)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "donas / Seinao10@@ (/donaspainel)",
+  "seed_data_creation": "Durante o teste de salvar sessão foi persistido um cookie fake 'JSESSIONID=TEST_fake_cookie_aaa' / 'JSESSIONID=UI_TEST_cookie_xyz' em db.sessao_govbr (_id='atual'). Isso é esperado e é como o fluxo funciona.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend admin router é incluído por montar_admin_router(db, motor). Fixture do pytest usa REACT_APP_BACKEND_URL do .env do frontend. A sessão gov.br fica salva (ativa) após os testes rodarem — se precisar testar o cenário 'sem sessão' para /api/apuracao/consultar, limpar db.sessao_govbr antes.",
+  "rca of the issue": "Nenhum bug encontrado."
+}

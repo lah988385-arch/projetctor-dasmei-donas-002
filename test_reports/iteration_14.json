@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 14 validates the new consolidated DAS flow: pgmei4 → pgmei5 → single-page consolidated PDF. Updated /app/backend/tests/test_das_pdf.py (14 cases) covering GET /api/das/gerados, GET /api/das/pdf (consolidated 1 page), POST /api/das/pdf (1 page + numeric contents for ago/2026), validations (CNPJ inválido, pas vazio, ano fora), and 12 períodos consolidados em 1 página para 37411286000108. Full suite 29/29 passing. Playwright confirms: #btnEmitirDas navigates to /pgmei5.html?cnpj=&ano=&pas=&dt=; #das-tbody populated with Outubro/2026, numero_apuracao 405701992026102809, numero_das 07.10.72809.9874471-3, vencimento 23/11/2026; #btnImprimir href=/api/das/pdf/40570199000108/2026?pas=202610&dt=01%2F10%2F2026 target=_blank; #btnVoltar href=/pgmei4.html?cnpj=...&ano=... correct. PDF endpoint returns 1 page containing período consolidado '07/2026 a 09/2026', tributos consolidados INSS 243,15 ICMS 3,00 ISS 0,00, três linhas 0151 + três 0083, Totais 246,15/14,07/2,46/262,68, 'DOCUMENTO DE ESTUDO' e 'NÃO PAGÁVEL'. 12 períodos → 1 página com ≥12 ocorrências de cada código (layout compacto).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_das_pdf.py",
+    "/app/test_reports/pytest/das_pdf.xml",
+    "/app/test_reports/pytest/all.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "das_pdf.py gerar_pdf_das agora consolida corretamente múltiplos PAs em 1 página; o layout 'compacto' (>13 entradas) coloca denominação+UF/MM/AAAA na mesma linha — funciona para 24 linhas (12 INSS+12 ICMS).",
+    "server.py: _periodos_escolhidos é reaproveitado pelos endpoints GET /api/das/gerados e GET /api/das/pdf — ótimo DRY. Validações 400 cobrem CNPJ inválido, pas vazio e período fora do ano.",
+    "numero_apuracao/ numero_documento são determinísticos (mod11) — útil para testar; frontend confirma strings exatas.",
+    "Marca d'água 'DOCUMENTO DE ESTUDO/SEM VALIDADE LEGAL' presente em cada página; aviso vermelho 'NÃO PAGÁVEL' preservado — requisito do problem statement atendido."
+  ],
+  "updated_files": ["/app/backend/tests/test_das_pdf.py"],
+  "success_rate": {"backend": "100% (29/29)", "frontend": "100% (pgmei4→pgmei5 flow + btnImprimir + btnVoltar)"},
+  "test_credentials": "N/A — CNPJs públicos (40570199000108 Maria Janiere RN, 37411286000108 Luci Schiavi)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests exigem env REACT_APP_BACKEND_URL. Rode com: `cd /app && REACT_APP_BACKEND_URL=$(grep REACT_APP_BACKEND_URL frontend/.env | cut -d= -f2) python -m pytest backend/tests/ -v`. Playwright: para disparar o botão submit #btnEmitirDas use `page.evaluate(\"document.querySelector('#btnEmitirDas').click()\")` em vez de page.click (há um overlay/ladda-spinner que intercepta cliques nativos). A navegação para pgmei5 leva ~2s por causa do spinner. O helper _normalize em test_das_pdf.py continua necessário por causa da marca d'água rotacionada que vaza letras isoladas no texto extraído.",
+  "rca of the issue": "Nenhum bug encontrado. Comportamento conforme especificado: PDF consolidado 1 página, nova tela pgmei5 com tabela de DAS gerados, endpoints GET /api/das/gerados e GET /api/das/pdf funcionando com validações 400 corretas."
+}

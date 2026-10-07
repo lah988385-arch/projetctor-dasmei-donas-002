@@ -1,0 +1,17 @@
+{
+  "summary": "Validated new /api/apuracao/{cnpj}/{ano} endpoint and the new pgmei4.html apuração screen end-to-end. Backend returns 12 Liquidado periods with '-' values and business-day DAS vencimentos (feriado 20/11 observado). Full UI flow login -> pgmei2 -> pgmei3 (ano 2026) -> Ok -> pgmei4 works, overlay runs ~2s with no flash of CNPJ/Nome or dropdown-menu. Table has exactly 12 tr.pa rows, first Janeiro/2026, last Dezembro/2026, all show Liquidado and '-'. #selecionarTodos toggles 12 checkboxes; btnEmitirDas shows red banner when nothing selected and 'indisponibilidade' banner after ~2s with selected PA. Changing the year combo to 2024 and clicking Ok reloads with Janeiro/2024 as first row. Header shows '37.411.286/0001-08' and 'LUCI SCHIAVI DA SILVA 42017335215' without flashes. #dataPagamentoInformada is prefilled dd/mm/aaaa.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_apuracao.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "pgmei4 inline script could be moved to pgmei-shared.js to reduce duplication across the 4 screens, but not critical.",
+    "_vencimento_das only treats weekends and 20/11 as non-business days; other national feriados (ex: Carnaval, Corpus Christi, 25/12 que caia em dia útil fora dos jogos) ainda não são considerados, mas suficiente para o fluxo de estudo."
+  ],
+  "updated_files": ["/app/backend/tests/test_apuracao.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 11 features in request passed: GET /api/apuracao for 2026 and 2024 CNPJs match expected vencimentos; pgmei4.html full flow (login, year select, Ok, overlay, table, selecionarTodos, btnEmitirDas banners, year change) all operational. Checkbox data-testid='pa-check-YYYYMM' present. No flash of nav dropdown-menu or '--/Carregando...' observed during 20x100ms polling after Ok."
+}
