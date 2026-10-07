@@ -37,6 +37,18 @@ async def saldo() -> float:
         raise CaptchaError(data.get("errorDescription") or "Falha ao consultar saldo.")
     return float(data.get("balance", 0))
 
+def proxy_para_playwright() -> Optional[dict]:
+    """Retorna o proxy no formato que o Playwright espera, ou None."""
+    p = _proxy_ambiente()
+    if not p:
+        return None
+    cfg = {"server": f"{p['type']}://{p['host']}:{p['port']}"}
+    if p["user"]:
+        cfg["username"] = p["user"]
+        cfg["password"] = p["pass"]
+    return cfg
+
+
 
 async def extrair_sitekey(page) -> tuple[Optional[str], bool]:
     """Extrai o sitekey do hCaptcha e se é invisible, a partir da página aberta."""
@@ -77,6 +89,25 @@ async def _post_json(cli: httpx.AsyncClient, url: str, payload: dict, tentativas
     raise CaptchaError(f"2Captcha não respondeu corretamente ({ultimo}).")
 
 
+def _proxy_ambiente() -> Optional[dict]:
+    """Lê proxy residencial do ambiente. Formato: PROXY_SERVER=host:porta, PROXY_USER, PROXY_PASS."""
+    server = os.environ.get("PROXY_SERVER", "").strip()
+    if not server:
+        return None
+    if "://" in server:
+        server = server.split("://", 1)[1]
+    host, _, porta = server.partition(":")
+    if not host or not porta:
+        return None
+    return {
+        "host": host,
+        "port": int(porta),
+        "user": os.environ.get("PROXY_USER", "").strip(),
+        "pass": os.environ.get("PROXY_PASS", "").strip(),
+        "type": os.environ.get("PROXY_TYPE", "http").strip().lower(),
+    }
+
+
 async def _resolver_uma_vez(cli: httpx.AsyncClient, chave: str, task: dict, timeout_seg: int) -> str:
     criado = await _post_json(cli, f"{TWOCAPTCHA_BASE}/createTask",
                               {"clientKey": chave, "task": task})
@@ -105,15 +136,28 @@ async def _resolver_uma_vez(cli: httpx.AsyncClient, chave: str, task: dict, time
 
 async def resolver_hcaptcha(website_url: str, website_key: str, invisible: bool = True,
                             timeout_seg: int = 150, tentativas: int = 3) -> str:
-    """Resolve o hCaptcha no 2Captcha, com retry (workers às vezes falham)."""
+    """Resolve o hCaptcha no 2Captcha, com retry (workers às vezes falham).
+
+    Se houver proxy residencial no ambiente, usa HCaptchaTask (proxy) para que o
+    captcha seja resolvido pelo MESMO IP que enviará o formulário.
+    """
     chave = _chave()
+    proxy = _proxy_ambiente()
     task = {
-        "type": "HCaptchaTaskProxyless",
+        "type": "HCaptchaTask" if proxy else "HCaptchaTaskProxyless",
         "websiteURL": website_url,
         "websiteKey": website_key,
         "isInvisible": invisible,
         "userAgent": UA,
     }
+    if proxy:
+        task.update({
+            "proxyType": proxy["type"],
+            "proxyAddress": proxy["host"],
+            "proxyPort": proxy["port"],
+            "proxyLogin": proxy["user"],
+            "proxyPassword": proxy["pass"],
+        })
     async with httpx.AsyncClient(timeout=30) as cli:
         ultimo = ""
         for n in range(tentativas):

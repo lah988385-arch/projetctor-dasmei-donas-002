@@ -28,8 +28,13 @@ async def main():
             args=["--no-sandbox", "--disable-dev-shm-usage",
                   "--disable-blink-features=AutomationControlled", "--lang=pt-BR"],
             ignore_default_args=["--enable-automation"])
-        ctx = await browser.new_context(viewport={"width":1000,"height":760}, user_agent=UA,
-                                        locale="pt-BR", timezone_id="America/Sao_Paulo")
+        proxy_cfg = cs.proxy_para_playwright()
+        print("proxy navegador:", proxy_cfg["server"] if proxy_cfg else "NENHUM (direto)")
+        ctx_kwargs = dict(viewport={"width":1000,"height":760}, user_agent=UA,
+                          locale="pt-BR", timezone_id="America/Sao_Paulo")
+        if proxy_cfg:
+            ctx_kwargs["proxy"] = proxy_cfg
+        ctx = await browser.new_context(**ctx_kwargs)
         page = await ctx.new_page()
         try:
             await page.goto(URL, wait_until="domcontentloaded", timeout=45000)
