@@ -1,4 +1,5 @@
 const $ = (id) => document.getElementById(id);
+const API_PADRAO = "https://emergent-dasmei.preview.emergentagent.com";
 
 function render(log) {
   const el = $("log");
@@ -13,7 +14,7 @@ function render(log) {
 }
 
 chrome.storage.local.get(["config", "estado"], (d) => {
-  if (d.config && d.config.api) $("painel").value = d.config.api;
+  $("painel").value = (d.config && d.config.api) || API_PADRAO;
   if (d.estado) render(d.estado.log);
 });
 

@@ -1,5 +1,5 @@
 const BASE_PGMEI = 'https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao';
-const API_PADRAO = 'https://pgmei-study.preview.emergentagent.com';
+const API_PADRAO = 'https://emergent-dasmei.preview.emergentagent.com';
 
 const elCnpj = document.getElementById('cnpj');
 const elDe = document.getElementById('de');

@@ -2,7 +2,7 @@
    Preenche o CNPJ, aguarda o captcha ser resolvido por ele e, já autenticado,
    percorre os anos-calendário enviando o HTML da emissão para o app de estudo. */
 
-const API_PADRAO = 'https://pgmei-study.preview.emergentagent.com';
+const API_PADRAO = 'https://emergent-dasmei.preview.emergentagent.com';
 const MAX_TENTATIVAS = 3;
 
 async function lerEstado() {
