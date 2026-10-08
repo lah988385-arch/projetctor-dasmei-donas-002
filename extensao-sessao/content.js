@@ -1,279 +1,176 @@
-/* DonasPainel — worker que roda na SUA sessão logada do PGMEI.
-   Lê a tabela JÁ autenticada e envia o HTML de cada ano ao painel.
+/* DonasPainel — Importador PGMEI em LOTE (roda na sua sessão logada).
 
-   POR QUE O POST DIRETO: o combo de ano da Receita é um bootstrap-select
-   (o <select name=ano> real fica escondido com tabindex=-98). Mexer no valor
-   por código ou clicar no widget NÃO sincroniza o estado dele, então o
-   formulário ia sem o ano e a Receita respondia "É necessário selecionar o
-   ano-calendário" — gerando loop infinito.
-   O form é um POST simples (action=/.../pgmei.app/emissao, campo "ano", sem
-   token antifalsificação), então montamos o POST na mão: determinístico.
-   Há travas anti-loop para nunca martelar o site da Receita. */
+   Como funciona: para cada CNPJ da lista, troca o contribuinte ativo via
+   POST /Identificacao/Continuar (na área logada normalmente NÃO há captcha),
+   lê os anos disponíveis e baixa a tabela de cada ano por POST /emissao,
+   enviando o HTML real ao painel (/api/apuracao/importar). Tudo via fetch
+   same-origin: os cookies da sessão logada vão automaticamente.
 
-/* IIFE: escopo próprio. Sem isto, a 2ª injeção do arquivo no mesmo documento
-   (content_scripts + executeScript) estoura "Identifier already declared" e o
-   script morre antes de logar qualquer coisa. */
+   Se a troca de CNPJ voltar para a tela de identificação (captcha), o CNPJ é
+   marcado como "bloqueado" e seguimos para o próximo — nunca martela o site. */
 (function () {
+  if (window.__dpRunning) return;      // evita execução concorrente no mesmo documento
+  window.__dpRunning = true;
 
-const MAX_TENTATIVAS_ANO = 2;   // tentativas por ano
-const MAX_PASSOS = 60;          // recargas totais por importação
-
-const DEFAULT_API = "https://emergent-dasmei.preview.emergentagent.com";
-async function lerEstado() {
-  const { estado, config } = await chrome.storage.local.get(['estado', 'config']);
-  return { estado, api: (((config && config.api) || DEFAULT_API) || '').replace(/\/+$/, '') };
-}
-async function gravar(estado) { await chrome.storage.local.set({ estado }); }
-async function logar(estado, texto, tipo) {
-  estado.log = [...(estado.log || []), { texto, tipo }].slice(-80);
-  await gravar(estado);
-}
-async function parar(estado, texto, tipo = 'erro') {
-  estado.ativo = false;
-  await logar(estado, texto, tipo);
-}
-
-const soDigitos = (v) => (v || '').replace(/\D/g, '');
-const fmtCnpj = (c) => c.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-
-function selectAno() {
-  return document.querySelector('select[name=ano], #anoCalendarioSelect, #ano');
-}
-function tabelaNaTela() {
-  return !!document.querySelector('tr.pa, input[name=pa]');
-}
-function alertaDaPagina() {
-  const alvos = [...document.querySelectorAll('[class*="alert"], [class*="erro"], [role=alert]')]
-    .map((a) => (a.innerText || '').trim())
-    .filter((t) => t && t.length < 300 && !/JavaScript/i.test(t));
-  if (alvos.length) return alvos[alvos.length - 1];
-  // rede de segurança: mensagens típicas da Receita sem classe de alerta
-  const m = document.body.innerText
-    .match(/(n[ãa]o\s+optante[^.\n]{0,80}|necess[áa]rio\s+selecionar[^.\n]{0,60})/i);
-  return m ? m[1].trim() : '';
-}
-function detectarCnpj() {
-  const m = document.body.innerText
-    .match(/CNPJ[:\s]*(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})/i);
-  return m ? soDigitos(m[1]) : null;
-}
-function anoDaPagina() {
-  const pa = document.querySelector('input[name=pa]');
-  if (pa && /^\d{6}$/.test(pa.value)) return Number(pa.value.slice(0, 4));
-  const sel = selectAno();
-  const v = sel && (sel.value || '').trim();
-  if (v && /^\d{4}/.test(v)) return Number(v.slice(0, 4));
-  return null;
-}
-function anosDoSeletor() {
-  const sel = selectAno();
-  if (!sel) return [];
-  return [...sel.options]
-    .map((o) => Number(((o.value || o.text || '').trim()).slice(0, 4)))
-    .filter((a) => a > 2000 && a < 2100)
-    .sort((a, b) => b - a); // mais recente primeiro
-}
-
-/* Monta e envia o POST do ano na mão — sem depender do bootstrap-select. */
-function postarAno(ano) {
-  const sel = selectAno();
-  const original = (sel && sel.closest('form'))
-    || document.querySelector('form[action*="emissao"]');
-  const action = (original && original.getAttribute('action'))
-    || '/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/emissao';
-
-  const f = document.createElement('form');
-  f.method = 'post';
-  f.action = action;
-  f.style.display = 'none';
-
-  // replica eventuais campos hidden (tokens) do form original
-  if (original) {
-    original.querySelectorAll('input[type=hidden]').forEach((h) => {
-      if (!h.name || h.name === 'ano') return;
-      const i = document.createElement('input');
-      i.type = 'hidden'; i.name = h.name; i.value = h.value;
-      f.appendChild(i);
-    });
-  }
-  const inp = document.createElement('input');
-  inp.type = 'hidden'; inp.name = 'ano'; inp.value = String(ano);
-  f.appendChild(inp);
-
-  document.body.appendChild(f);
-  f.submit();
-}
-
-async function proximoAno(estado) {
-  const pendentes = (estado.anos || []).filter((a) => !(estado.feitos || []).includes(a));
-  if (!pendentes.length) {
-    const ok = (estado.importados || []).length;
-    await parar(estado, `✓ Concluído! ${ok} ano(s) importado(s). Veja os valores no painel.`, 'ok');
-    return;
-  }
-  const ano = pendentes[0];
-  estado.anoAtual = ano;
-  await logar(estado, `Abrindo ${ano}...`);
-  await gravar(estado);
-  setTimeout(() => postarAno(ano), 300);
-}
-
-async function importarAnoAtual(estado, api) {
-  const ano = anoDaPagina();
-  if (!ano) { await parar(estado, 'Não identifiquei o ano desta tela.'); return; }
-  if ((estado.feitos || []).includes(ano)) { estado.anoAtual = null; return proximoAno(estado); }
-
-  await logar(estado, `Lendo ${ano}...`);
-  try {
-    const r = await fetch(`${api}/api/apuracao/importar`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cnpj: estado.cnpj, ano, html: document.documentElement.outerHTML }),
-    });
-    const c = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      await logar(estado, `${ano}: ${c.detail || 'falhou'}`, 'erro');
-    } else {
-      estado.importados = [...(estado.importados || []), ano];
-      await logar(estado,
-        `${ano}: ${c.total_periodos} período(s), ${c.em_aberto.length} em aberto, devido R$ ${c.total_em_aberto_formatado}`, 'ok');
-    }
-  } catch (e) {
-    await logar(estado, `${ano}: falha ao enviar (${e.message})`, 'erro');
-  }
-
-  estado.feitos = [...(estado.feitos || []), ano];
-  estado.anoAtual = null;
-  await gravar(estado);
-  return proximoAno(estado);
-}
-
-/* Auto-descoberta: manda o mapa da aplicação autenticada (forms, campos, links)
-   para o painel. Serve para montar o "Modo API" sem adivinhar endpoints e sem
-   exigir nenhuma ação do usuário. Roda uma vez por página, em silêncio. */
-/* Explora as rotas do próprio app autenticado via fetch (same-origin: os cookies
-   vão automaticamente) e manda o mapa de cada uma. Objetivo: descobrir se existe
-   algum ponto de troca de CNPJ sem precisar de nenhuma ação do usuário. */
-async function explorarRotas(api) {
   const RAIZ = '/SimplesNacional/Aplicacoes/ATSPO/pgmei.app';
-  const rotas = ['/Home/inicio', '/consulta/extrato', '/consulta/pendencia',
-                 '/consulta/dasEmitidos', '/identificacao', '/Identificacao'];
-  for (const rota of rotas) {
-    try {
-      const r = await fetch(RAIZ + rota, { credentials: 'include' });
-      const txt = await r.text();
-      const doc = new DOMParser().parseFromString(txt, 'text/html');
-      const forms = [...doc.querySelectorAll('form')].slice(0, 20).map((f) => ({
-        action: f.getAttribute('action') || '',
-        method: (f.getAttribute('method') || 'get').toLowerCase(),
-        id: f.id || '',
-        campos: [...f.querySelectorAll('input,select,textarea')].slice(0, 30).map((c) => ({
-          nome: c.name || '', tipo: (c.tagName === 'SELECT' ? 'select' : (c.type || 'text')), id: c.id || '',
-        })),
-      }));
-      const links = [...doc.querySelectorAll('a[href]')].slice(0, 60).map((a) => ({
-        href: a.getAttribute('href') || '', texto: (a.innerText || a.textContent || '').trim().slice(0, 80),
-      }));
-      await fetch(`${api}/api/extensao/mapa`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: 'EXPLORADA ' + rota + ' [' + r.status + ']',
-          titulo: (doc.title || '').slice(0, 200), forms, links,
-        }),
-      });
-      await new Promise((s) => setTimeout(s, 1200)); // espaçamento educado
-    } catch (e) { /* silencioso */ }
-  }
-}
+  const DEFAULT_API = 'https://emergent-dasmei.preview.emergentagent.com';
+  const PAUSA = 700; // ms entre requisições (educado com a Receita)
 
-async function enviarMapa(api) {
-  try {
-    const forms = [...document.querySelectorAll('form')].slice(0, 40).map((f) => ({
-      action: f.getAttribute('action') || '',
-      method: (f.getAttribute('method') || 'get').toLowerCase(),
-      id: f.id || '',
-      campos: [...f.querySelectorAll('input,select,textarea')].slice(0, 40).map((c) => ({
-        nome: c.name || '',
-        tipo: (c.tagName === 'SELECT' ? 'select' : (c.type || 'text')),
-        id: c.id || '',
-        opcoes: c.tagName === 'SELECT'
-          ? [...c.options].slice(0, 30).map((o) => ((o.value || o.text || '').trim()))
-          : undefined,
-      })),
-    }));
-    const links = [...document.querySelectorAll('a[href]')].slice(0, 120).map((a) => ({
-      href: a.getAttribute('href') || '',
-      texto: (a.innerText || '').trim().slice(0, 80),
-    }));
-    await fetch(`${api}/api/extensao/mapa`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: location.href, titulo: document.title, forms, links }),
+  const soDigitos = (v) => (v || '').replace(/\D/g, '');
+  const fmt = (c) => c.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const parse = (html) => new DOMParser().parseFromString(html, 'text/html');
+
+  async function getState() {
+    const { estado, config } = await chrome.storage.local.get(['estado', 'config']);
+    return { e: estado || {}, api: (((config && config.api) || DEFAULT_API) || '').replace(/\/+$/, '') };
+  }
+  async function save(e) { await chrome.storage.local.set({ estado: e }); }
+  async function log(e, texto, tipo) {
+    e.log = [...(e.log || []), { texto, tipo }].slice(-300);
+    await save(e);
+  }
+
+  function token(doc) {
+    const t = doc.querySelector('input[name=__RequestVerificationToken]');
+    return t ? t.value : '';
+  }
+  function temTabela(doc) { return !!doc.querySelector('tr.pa, input[name=pa]'); }
+  function ehIdentificacao(doc) {
+    return !!doc.querySelector('#cnpj') && /Identificacao\/Continuar/i.test(doc.documentElement.innerHTML);
+  }
+  function anos(doc) {
+    const sel = doc.querySelector('select[name=ano]');
+    if (!sel) return [];
+    return [...sel.options]
+      .map((o) => Number((o.value || o.text || '').trim().slice(0, 4)))
+      .filter((a) => a > 2000 && a < 2100)
+      .sort((a, b) => b - a);
+  }
+  function cnpjDaPagina(doc) {
+    const m = (doc.body.innerText || '').match(/CNPJ[:\s]*(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})/i);
+    return m ? soDigitos(m[1]) : null;
+  }
+
+  async function getDoc(path) {
+    const r = await fetch(RAIZ + path, { credentials: 'include' });
+    return parse(await r.text());
+  }
+  async function postForm(path, params) {
+    const r = await fetch(RAIZ + path, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(params).toString(),
     });
-  } catch (e) { /* silencioso: nunca atrapalha a importação */ }
-}
-
-(async function () {
-  const { estado, api } = await lerEstado();
-  if (!estado || !estado.ativo) return;
-
-  // evita rodar duas vezes no MESMO documento (injeção dupla)
-  if (window.__dpRodou) return;
-  window.__dpRodou = true;
-
-  enviarMapa(api);      // mapa da página atual
-  explorarRotas(api);   // varre as rotas do app sozinha
-
-  // trava global: nunca martelar o site da Receita
-  estado.passos = (estado.passos || 0) + 1;
-  if (estado.passos > MAX_PASSOS) {
-    await parar(estado, 'Parei por segurança (limite de passos atingido).');
-    return;
-  }
-  await gravar(estado);
-
-  if (!api) { await parar(estado, 'Configure o endereço do painel.'); return; }
-
-  if (document.querySelector('#cnpj') && !selectAno() && !tabelaNaTela()) {
-    await parar(estado, 'Você está na tela de identificação. Faça login, abra "Emitir Guia (DAS)" de um CNPJ e clique em Importar.');
-    return;
+    return r;
   }
 
-  if (!estado.cnpj) {
-    const cnpj = detectarCnpj();
-    if (!cnpj) { await parar(estado, 'Não achei o CNPJ na tela. Abra a emissão de um CNPJ.'); return; }
-    estado.cnpj = cnpj;
-    await logar(estado, `CNPJ ${fmtCnpj(cnpj)} detectado.`, 'ok');
+  // Troca o contribuinte ativo. Retorna o doc resultante.
+  async function identificar(cnpj) {
+    const d1 = await getDoc('/Identificacao');
+    const tk = token(d1);
+    const params = { cnpj };
+    if (tk) params['__RequestVerificationToken'] = tk;
+    params['h-captcha-response'] = '';   // na área logada, normalmente ignorado
+    params['g-recaptcha-response'] = '';
+    const r = await postForm('/Identificacao/Continuar', params);
+    return parse(await r.text());
   }
 
-  if (!estado.anos || !estado.anos.length) {
-    let anos = anosDoSeletor();
-    if (!anos.length) { const a = anoDaPagina(); anos = a ? [a] : []; }
-    if (!anos.length) { await parar(estado, 'Não achei os anos disponíveis nesta tela.'); return; }
-    estado.anos = anos;
-    estado.feitos = [];
-    estado.importados = [];
-    estado.tent = {};
-    await logar(estado, `Anos a importar: ${anos.join(', ')}`);
-    await gravar(estado);
+  async function htmlDoAno(ano) {
+    const r = await postForm('/emissao', { ano: String(ano) });
+    return await r.text();
   }
 
-  // tabela na tela -> importa; senão trata o alerta e vai pro próximo ano
-  if (tabelaNaTela()) return importarAnoAtual(estado, api);
+  async function importarCnpj(e, api, cnpj) {
+    await log(e, `CNPJ ${fmt(cnpj)}: identificando...`);
+    let doc = await identificar(cnpj);
 
-  // Voltamos de um POST e NÃO há tabela: este ano simplesmente não tem dados
-  // (ex.: "Contribuinte não optante pelo SIMEI neste ano-calendário").
-  // Marca como feito na PRIMEIRA vez e segue — garante progresso, sem loop.
-  const alerta = alertaDaPagina();
-  if (estado.anoAtual) {
-    const ano = estado.anoAtual;
-    estado.feitos = [...(estado.feitos || []), ano];
-    await logar(estado, `${ano}: ${alerta || 'sem dados para este ano'} — pulando.`, 'erro');
-    estado.anoAtual = null;
-    await gravar(estado);
+    // Se voltou a tela de identificação (sem tabela e sem anos) => captcha barrou a troca
+    if (ehIdentificacao(doc) && !temTabela(doc) && anos(doc).length === 0) {
+      await log(e, `CNPJ ${fmt(cnpj)}: a troca pediu captcha/robô — não troquei automaticamente.`, 'err');
+      e.bloqueados = [...(e.bloqueados || []), cnpj];
+      return false;
+    }
+
+    // confere que realmente identificou este CNPJ
+    const detectado = cnpjDaPagina(doc);
+    if (detectado && detectado !== cnpj) {
+      await log(e, `CNPJ ${fmt(cnpj)}: a sessão está em ${fmt(detectado)} — a troca não aplicou.`, 'err');
+      e.bloqueados = [...(e.bloqueados || []), cnpj];
+      return false;
+    }
+
+    // lista de anos
+    let lista = anos(doc);
+    if (!lista.length) { doc = await getDoc('/emissao'); lista = anos(doc); }
+    if (!lista.length) {
+      const atual = new Date().getFullYear();
+      lista = [atual, atual - 1, atual - 2];
+    }
+    await log(e, `CNPJ ${fmt(cnpj)}: anos ${lista.join(', ')}`);
+
+    let ok = 0;
+    for (const ano of lista) {
+      if (!e.ativo) break;
+      try {
+        const html = await htmlDoAno(ano);
+        const d = parse(html);
+        if (!temTabela(d)) { await log(e, `   ${ano}: sem dados (não optante) — pulando.`); await sleep(PAUSA); continue; }
+        const r = await fetch(`${api}/api/apuracao/importar`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cnpj, ano, html }),
+        });
+        const c = await r.json().catch(() => ({}));
+        if (r.ok) {
+          ok++;
+          await log(e, `   ${ano}: ${c.total_periodos} per., ${(c.em_aberto || []).length} em aberto, devido R$ ${c.total_em_aberto_formatado || '0,00'}`, 'ok');
+        } else {
+          await log(e, `   ${ano}: ${c.detail || 'falhou'}`, 'err');
+        }
+      } catch (err) {
+        await log(e, `   ${ano}: erro (${err.message})`, 'err');
+      }
+      await sleep(PAUSA);
+    }
+    await log(e, `CNPJ ${fmt(cnpj)}: ${ok} ano(s) importado(s).`, ok ? 'ok' : 'err');
+    return true;
   }
 
-  return proximoAno(estado);
+  (async function () {
+    const { e, api } = await getState();
+    try {
+      if (!e.ativo) return;
+      if (!api) { await log(e, 'Configure o endereço do painel.', 'err'); return; }
+
+      let lista = (e.cnpjs || []).map(soDigitos).filter((c) => c.length === 14);
+      if (!lista.length) {
+        const atual = cnpjDaPagina(document);
+        if (!atual) {
+          await log(e, 'Cole uma lista de CNPJs no popup, ou abra a emissão de um CNPJ.', 'err');
+          e.ativo = false; await save(e); return;
+        }
+        lista = [atual];
+      }
+      // remove duplicados preservando ordem
+      lista = [...new Set(lista)];
+      await log(e, `Lote iniciado: ${lista.length} CNPJ(s).`, 'ok');
+
+      let feitos = 0, bloq = 0;
+      for (const cnpj of lista) {
+        if (!e.ativo) { await log(e, 'Interrompido pelo usuário.', 'err'); break; }
+        try {
+          const okc = await importarCnpj(e, api, cnpj);
+          okc ? feitos++ : bloq++;
+        } catch (err) {
+          bloq++; await log(e, `CNPJ ${fmt(cnpj)}: falha (${err.message})`, 'err');
+        }
+        await sleep(PAUSA);
+      }
+      await log(e, `✓ Concluído! ${feitos} CNPJ(s) OK${bloq ? `, ${bloq} bloqueado(s)` : ''}. Veja os valores no painel.`, 'ok');
+      e.ativo = false; await save(e);
+    } finally {
+      window.__dpRunning = false;
+    }
+  })();
 })();
-
-})();  // fim do IIFE

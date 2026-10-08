@@ -13,12 +13,19 @@ function render(log) {
   el.scrollTop = el.scrollHeight;
 }
 
+function parseCnpjs(txt) {
+  return (txt || "")
+    .split(/[\s,;]+/)
+    .map((s) => s.replace(/\D/g, ""))
+    .filter((s) => s.length === 14);
+}
+
 chrome.storage.local.get(["config", "estado"], (d) => {
   $("painel").value = (d.config && d.config.api) || API_PADRAO;
+  if (d.config && Array.isArray(d.config.cnpjs)) $("cnpjs").value = d.config.cnpjs.join("\n");
   if (d.estado) render(d.estado.log);
 });
 
-// atualiza o log em tempo real enquanto a extensão trabalha
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.estado) render(changes.estado.newValue && changes.estado.newValue.log);
 });
@@ -27,17 +34,23 @@ $("importar").addEventListener("click", async () => {
   const api = $("painel").value.trim().replace(/\/+$/, "");
   if (!api) { render([{ texto: "Preencha o endereço do painel.", tipo: "err" }]); return; }
 
-  await chrome.storage.local.set({
-    config: { api },
-    estado: { ativo: true, log: [{ texto: "Iniciando...", tipo: "ok" }] },
-  });
+  const cnpjs = parseCnpjs($("cnpjs").value);
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !/receita\.fazenda\.gov\.br/.test(tab.url || "")) {
-    render([{ texto: "Abra a aba do PGMEI (receita.fazenda.gov.br) e tente de novo.", tipo: "err" }]);
+    render([{ texto: "Abra a aba do PGMEI logado (receita.fazenda.gov.br) e tente de novo.", tipo: "err" }]);
     return;
   }
-  // dispara o worker imediatamente na aba atual; o loop segue via content_script
+
+  await chrome.storage.local.set({
+    config: { api, cnpjs },
+    estado: {
+      ativo: true,
+      cnpjs,
+      log: [{ texto: cnpjs.length ? `Preparando ${cnpjs.length} CNPJ(s)...` : "Importando o CNPJ aberto...", tipo: "ok" }],
+    },
+  });
+
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] });
   } catch (e) {
