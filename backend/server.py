@@ -687,6 +687,27 @@ async def receber_mapa(payload: dict = Body(...)):
     return {"ok": True}
 
 
+@api_router.post("/captcha/solve")
+async def captcha_solve(payload: dict = Body(...)):
+    """Resolve o hCaptcha da identificação do PGMEI via 2Captcha.
+
+    A extensão (no navegador logado do usuário) manda o sitekey e a URL; o token
+    volta e a extensão o injeta na troca de CNPJ (POST /Identificacao/Continuar).
+    """
+    import captcha_solver
+    website_url = str(payload.get("website_url") or "").strip()
+    website_key = str(payload.get("website_key") or "").strip()
+    invisible = bool(payload.get("invisible", True))
+    if not website_url or not website_key:
+        raise HTTPException(status_code=400, detail="website_url e website_key são obrigatórios.")
+    try:
+        token = await captcha_solver.resolver_hcaptcha(website_url, website_key, invisible)
+        return {"ok": True, "token": token}
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"2Captcha: {exc}")
+
+
+
 @api_router.post("/apuracao/consultar", response_model=ConsultaStatus)
 async def consultar_apuracao(payload: ConsultaAutomaticaRequest):
     """Dispara a busca dos valores reais reaproveitando a sessão autenticada salva.

@@ -65,14 +65,37 @@
     return r;
   }
 
-  // Troca o contribuinte ativo. Retorna o doc resultante.
-  async function identificar(cnpj) {
+  const SITEKEY_PADRAO = '2c0f2c5b-d8b9-469a-98ec-56271c2f68e4';
+  function extrairSitekey(doc) {
+    const el = doc.querySelector('[data-sitekey]');
+    if (el && el.getAttribute('data-sitekey')) return el.getAttribute('data-sitekey');
+    const ifr = [...doc.querySelectorAll('iframe')].map((f) => f.src || '').find((s) => /hcaptcha/.test(s));
+    if (ifr) { const m = ifr.match(/sitekey=([0-9a-f-]{20,})/i); if (m) return m[1]; }
+    const m2 = doc.documentElement.innerHTML.match(/sitekey['"]?\s*[:=]\s*['"]([0-9a-f-]{20,})/i);
+    if (m2) return m2[1];
+    return null;
+  }
+  async function resolverCaptcha(api, sitekey) {
+    const r = await fetch(`${api}/api/captcha/solve`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ website_url: location.origin + RAIZ + '/Identificacao', website_key: sitekey, invisible: true }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.token) throw new Error(j.detail || ('falha ' + r.status));
+    return j.token;
+  }
+
+  // Troca o contribuinte ativo resolvendo o captcha via 2Captcha. Retorna o doc.
+  async function identificar(e, api, cnpj) {
     const d1 = await getDoc('/Identificacao');
     const tk = token(d1);
+    const sitekey = extrairSitekey(d1) || SITEKEY_PADRAO;
+    await log(e, `CNPJ ${fmt(cnpj)}: resolvendo captcha (~15-40s)...`);
+    const captcha = await resolverCaptcha(api, sitekey);
     const params = { cnpj };
     if (tk) params['__RequestVerificationToken'] = tk;
-    params['h-captcha-response'] = '';   // na área logada, normalmente ignorado
-    params['g-recaptcha-response'] = '';
+    params['h-captcha-response'] = captcha;
+    params['g-recaptcha-response'] = captcha;
     const r = await postForm('/Identificacao/Continuar', params);
     return parse(await r.text());
   }
@@ -84,8 +107,7 @@
 
   async function importarCnpj(e, api, cnpj, precisaIdentificar) {
     if (precisaIdentificar) {
-      await log(e, `CNPJ ${fmt(cnpj)}: trocando contribuinte...`);
-      const doc = await identificar(cnpj);
+      const doc = await identificar(e, api, cnpj);
       if (ehIdentificacao(doc) && !temTabela(doc) && anos(doc).length === 0) {
         await log(e, `CNPJ ${fmt(cnpj)}: a troca pediu captcha — pulei (precisa resolver o captcha para trocar).`, 'err');
         e.bloqueados = [...(e.bloqueados || []), cnpj];
