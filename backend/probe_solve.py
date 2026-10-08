@@ -23,18 +23,18 @@ async def main():
     await asyncio.sleep(1.5)
     print("saldo capsolver:", await cs.saldo())
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(
+        proxy_cfg = cs.proxy_para_playwright()
+        print("proxy navegador:", proxy_cfg["server"] if proxy_cfg else "NENHUM (direto)")
+        launch_kwargs = dict(
             headless=False,
             args=["--no-sandbox", "--disable-dev-shm-usage",
                   "--disable-blink-features=AutomationControlled", "--lang=pt-BR"],
             ignore_default_args=["--enable-automation"])
-        proxy_cfg = cs.proxy_para_playwright()
-        print("proxy navegador:", proxy_cfg["server"] if proxy_cfg else "NENHUM (direto)")
-        ctx_kwargs = dict(viewport={"width":1000,"height":760}, user_agent=UA,
-                          locale="pt-BR", timezone_id="America/Sao_Paulo")
         if proxy_cfg:
-            ctx_kwargs["proxy"] = proxy_cfg
-        ctx = await browser.new_context(**ctx_kwargs)
+            launch_kwargs["proxy"] = proxy_cfg
+        browser = await pw.chromium.launch(**launch_kwargs)
+        ctx = await browser.new_context(viewport={"width":1000,"height":760}, user_agent=UA,
+                                        locale="pt-BR", timezone_id="America/Sao_Paulo")
         page = await ctx.new_page()
         try:
             await page.goto(URL, wait_until="domcontentloaded", timeout=45000)
