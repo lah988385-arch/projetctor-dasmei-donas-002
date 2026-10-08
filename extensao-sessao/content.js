@@ -18,9 +18,10 @@
 const MAX_TENTATIVAS_ANO = 2;   // tentativas por ano
 const MAX_PASSOS = 60;          // recargas totais por importação
 
+const DEFAULT_API = "https://emergent-dasmei.preview.emergentagent.com";
 async function lerEstado() {
   const { estado, config } = await chrome.storage.local.get(['estado', 'config']);
-  return { estado, api: ((config && config.api) || '').replace(/\/+$/, '') };
+  return { estado, api: (((config && config.api) || DEFAULT_API) || '').replace(/\/+$/, '') };
 }
 async function gravar(estado) { await chrome.storage.local.set({ estado }); }
 async function logar(estado, texto, tipo) {
