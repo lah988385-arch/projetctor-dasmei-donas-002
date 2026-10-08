@@ -1,0 +1,32 @@
+{
+  "summary": "Backend testing do pipeline de importação PGMEI (POST /api/apuracao/importar, GET /api/apuracao/{cnpj}/{ano}, GET /api/apuracao/importada, DELETE /api/apuracao/importada). Foco no requisito central do usuário: valores corretos e ISOLAMENTO POR CNPJ. 7/7 testes PASS.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_pgmei_importar.py",
+    "/app/test_reports/pytest/pgmei_importar.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py (~930 linhas) está acima do limite recomendado de 700; considerar extrair routers (apuracao, sessao, das) em módulos separados.",
+    "Modelo ImportacaoResumo usa listas mutáveis como default ([]) em Pydantic — funciona em v2 por imutabilidade interna, mas boa prática é usar Field(default_factory=list).",
+    "Em _validade_cache, `datetime.fromisoformat(importado_em)` assume string ISO com timezone; se um documento legado tiver string sem tz, o cálculo subtrai naive-aware e lança TypeError (edge case)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_pgmei_importar.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "N/A (skipped per request)"},
+  "test_credentials": "N/A (endpoints públicos)",
+  "seed_data_creation": "CNPJs TEST: 11222333000181 (Devedor 202601) e 11444777000161 (Pago/Liquidado 202603+202604). Ambos limpos no teardown.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Teste de importação PGMEI cobre parser (coluna checkbox + Período com <th></th> inicial no cabeçalho), resumir() (Devedor->em_aberto, Pago/Liquidado->liquidados), isolamento por CNPJ via chave {cnpj, ano} em apuracoes_importadas, cache_expira_em (7 dias), DELETE, e validação CNPJ (400). Para rodar: REACT_APP_BACKEND_URL=<url> pytest backend/tests/test_pgmei_importar.py",
+  "rca of the issue": "N/A — nenhum bug encontrado nesta iteração."
+}
