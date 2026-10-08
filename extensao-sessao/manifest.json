@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DonasPainel — Importar PGMEI",
-  "version": "2.5.0",
-  "description": "Lê os valores reais do PGMEI na sua sessão logada e envia ao painel. Roda no seu navegador autenticado — sem burlar nada.",
+  "version": "3.0.0",
+  "description": "Lote automático: resolve o captcha (2Captcha) e troca de CNPJ sozinha na sua sessão logada do PGMEI.",
   "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": [
     "https://*.receita.fazenda.gov.br/*",
