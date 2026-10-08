@@ -82,28 +82,26 @@
     return await r.text();
   }
 
-  async function importarCnpj(e, api, cnpj) {
-    await log(e, `CNPJ ${fmt(cnpj)}: identificando...`);
-    let doc = await identificar(cnpj);
-
-    // Se voltou a tela de identificação (sem tabela e sem anos) => captcha barrou a troca
-    if (ehIdentificacao(doc) && !temTabela(doc) && anos(doc).length === 0) {
-      await log(e, `CNPJ ${fmt(cnpj)}: a troca pediu captcha/robô — não troquei automaticamente.`, 'err');
-      e.bloqueados = [...(e.bloqueados || []), cnpj];
-      return false;
+  async function importarCnpj(e, api, cnpj, precisaIdentificar) {
+    if (precisaIdentificar) {
+      await log(e, `CNPJ ${fmt(cnpj)}: trocando contribuinte...`);
+      const doc = await identificar(cnpj);
+      if (ehIdentificacao(doc) && !temTabela(doc) && anos(doc).length === 0) {
+        await log(e, `CNPJ ${fmt(cnpj)}: a troca pediu captcha — pulei (precisa resolver o captcha para trocar).`, 'err');
+        e.bloqueados = [...(e.bloqueados || []), cnpj];
+        return false;
+      }
+      const detectado = cnpjDaPagina(doc);
+      if (detectado && detectado !== cnpj) {
+        await log(e, `CNPJ ${fmt(cnpj)}: a sessão ficou em ${fmt(detectado)} — troca não aplicou.`, 'err');
+        e.bloqueados = [...(e.bloqueados || []), cnpj];
+        return false;
+      }
     }
 
-    // confere que realmente identificou este CNPJ
-    const detectado = cnpjDaPagina(doc);
-    if (detectado && detectado !== cnpj) {
-      await log(e, `CNPJ ${fmt(cnpj)}: a sessão está em ${fmt(detectado)} — a troca não aplicou.`, 'err');
-      e.bloqueados = [...(e.bloqueados || []), cnpj];
-      return false;
-    }
-
-    // lista de anos
+    // CNPJ já identificado (na tela ou após troca): lê os anos e importa
+    let doc = await getDoc('/emissao');
     let lista = anos(doc);
-    if (!lista.length) { doc = await getDoc('/emissao'); lista = anos(doc); }
     if (!lista.length) {
       const atual = new Date().getFullYear();
       lista = [atual, atual - 1, atual - 2];
@@ -154,13 +152,14 @@
       }
       // remove duplicados preservando ordem
       lista = [...new Set(lista)];
+      const atual = cnpjDaPagina(document);  // CNPJ já identificado na tela
       await log(e, `Lote iniciado: ${lista.length} CNPJ(s).`, 'ok');
 
       let feitos = 0, bloq = 0;
       for (const cnpj of lista) {
         if (!e.ativo) { await log(e, 'Interrompido pelo usuário.', 'err'); break; }
         try {
-          const okc = await importarCnpj(e, api, cnpj);
+          const okc = await importarCnpj(e, api, cnpj, cnpj !== atual);
           okc ? feitos++ : bloq++;
         } catch (err) {
           bloq++; await log(e, `CNPJ ${fmt(cnpj)}: falha (${err.message})`, 'err');
