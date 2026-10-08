@@ -31,6 +31,10 @@ db = client[os.environ['DB_NAME']]
 # Create the main app without a prefix
 app = FastAPI()
 
+import pgmei_proxy
+pgmei_proxy.registrar(app)
+
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 

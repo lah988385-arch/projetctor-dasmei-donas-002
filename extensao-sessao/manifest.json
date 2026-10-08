@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DonasPainel — Importar PGMEI",
-  "version": "3.0.0",
-  "description": "Lote automático: resolve o captcha (2Captcha) e troca de CNPJ sozinha na sua sessão logada do PGMEI.",
+  "version": "3.1.0",
+  "description": "Lote: dirige a página do PGMEI (preenche CNPJ + Continuar) deixando o captcha do seu navegador passar, e baixa todos os anos de cada CNPJ da lista.",
   "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": [
     "https://*.receita.fazenda.gov.br/*",

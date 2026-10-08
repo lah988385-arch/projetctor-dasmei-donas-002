@@ -46,7 +46,10 @@ $("importar").addEventListener("click", async () => {
     config: { api, cnpjs },
     estado: {
       ativo: true,
-      cnpjs,
+      fila: cnpjs,
+      idx: 0,
+      iniciado: false,
+      tent: {},
       log: [{ texto: cnpjs.length ? `Preparando ${cnpjs.length} CNPJ(s)...` : "Importando o CNPJ aberto...", tipo: "ok" }],
     },
   });
