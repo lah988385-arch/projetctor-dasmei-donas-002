@@ -14,6 +14,22 @@ from starlette.responses import Response
 RECEITA = "https://www8.receita.fazenda.gov.br"
 PREFIXO = "/api/r"
 
+
+def _proxy_url():
+    """Proxy brasileiro (VPS) para a Receita ver um IP do Brasil. Lê do ambiente."""
+    import os
+    server = os.environ.get("PROXY_SERVER", "").strip()
+    if not server:
+        return None
+    if "://" in server:
+        server = server.split("://", 1)[1]
+    user = os.environ.get("PROXY_USER", "").strip()
+    pwd = os.environ.get("PROXY_PASS", "").strip()
+    tipo = os.environ.get("PROXY_TYPE", "http").strip() or "http"
+    if user:
+        return f"{tipo}://{user}:{pwd}@{server}"
+    return f"{tipo}://{server}"
+
 # tipos de conteúdo que reescrevemos (texto)
 _TEXTO = ("text/html", "javascript", "ecmascript", "text/css", "application/json", "text/xml", "application/xml")
 
@@ -71,7 +87,8 @@ def registrar(app):
         headers["origin"] = RECEITA
         body = await request.body()
 
-        async with httpx.AsyncClient(follow_redirects=False, timeout=45.0, verify=True) as cli:
+        async with httpx.AsyncClient(follow_redirects=False, timeout=45.0, verify=True,
+                                     proxy=_proxy_url()) as cli:
             r = await cli.request(request.method, url, headers=headers,
                                   content=body, cookies=request.cookies)
 
