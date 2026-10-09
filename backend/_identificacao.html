@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+    <meta http-equiv="content-language" content="pt-br">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/favicon.ico" />
+
+    <title>PGMEI - Programa Gerador de DAS do Microempreendedor Individual</title>
+
+    <link href="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Content/css/pgmei?v=IzG-dsGSne-0Msjh0PFHg0a2hon61or3CN6PPvqqrV01" rel="stylesheet"/>
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/modernizr?v=inCVuEFe6J4Q07A0AcRsbJic_UE5MwpRMNGcOtk94TE1"></script>
+
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+<body>
+    <input type="hidden" id="imgPath" value='/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/img' />
+    <input type="hidden" id="rootPath" value='/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/' />
+
+    
+    
+    
+    
+
+    <div class="container-fluid">
+
+        <header class="row">
+            <h3><span class="label label-success"><img alt="Brand" src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Content/img/logo-simples.png"> PGMEI</span></h3>
+            <h4 class="text-success">Programa Gerador de DAS do Microempreendedor Individual</h4>
+        </header>
+
+
+        <section class="row">
+            <!-- conteudo principal -->
+            <div class="well col-md-12" role="main">
+                
+
+
+
+
+
+
+
+<div Class="container">
+    <div Class="row">
+        <div Class="col-md-offset-3 col-md-5">
+            <div Class="panel panel-default">
+                <div Class="panel-heading">
+                    <h4 Class="panel-title">Informe o número completo do CNPJ</h4>
+                </div>
+
+                <div Class="panel-body">
+
+
+
+                        <script src="https://hcaptcha.com/1/api.js?recaptchacompat=off&hl=pt-BR" async defer></script>
+                        <script type="text/javascript">
+                             function onSubmit(token) {
+                                 document.getElementById('identificacao').submit();
+                             }
+
+                             function validate(event) {
+                                 event.preventDefault();
+                                 hcaptcha.execute();
+                             }
+
+                             function onload() {
+                                 var element = document.getElementById('continuar');
+                                 element.onclick = validate;
+                             }
+                        </script>
+
+
+                    <form id="identificacao" method="post" action="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao/Continuar" role="form">
+
+
+                        <input name="__RequestVerificationToken" type="hidden" value="vi32GQCg6XhuvlyG4IsMV5ztBgkGVs2sjqxKrnj4SJKpta9OXjfgdU57zVbhrHX7XgCp_Bf75sK1r5eGOhkXIfNb48tooRtgIU9NX1B11pk1" />
+
+                        <div class="form-group">
+                            <div class="col-md-offset-1 col-md-8">
+                                <div class="form-group">
+                                    <label for="cnpj" class="control-label">CNPJ completo:</label>
+                                    <input type="text" id="cnpj" class="form-control" name="cnpj" autocomplete="off" title="Deve ser informado CNPJ completo, inclusive com o dígito verificador, sem separadores de números, pontos ou traços." />
+                                    <br />
+                                    <div id="hcaptcha"
+                                         Class="h-captcha"
+                                         data-sitekey="2c0f2c5b-d8b9-469a-98ec-56271c2f68e4"
+                                         data-callback="onSubmit"
+                                         data-size="invisible"></div>
+
+                                        <div style="color: rgb(85, 85, 85); font-weight: 500; font-size: 8px; cursor: pointer; text-decoration: none; display: inline-block; line-height: 8px;">
+                                            <br />
+                                            <strong> Protegido por hCaptcha </strong> <br />
+                                            <a class="link" tabindex="0" aria-label="Política de Privacidade do hCaptcha" href="https://hcaptcha.com/privacy"> Privacidade</a> e
+                                            <a class="link" tabindex="0" aria-label="Termos e Condições do hCaptcha" href="https://hcaptcha.com/terms"> Termos e condições</a>.
+                                        </div>
+
+                                </div>
+                            </div>
+
+                            <div class="col-md-offset-1 col-md-11">
+                                <div class="form-group">
+                                    <button id="continuar" type="submit" class="btn btn-success ladda-button" data-style="slide-left">Continuar</button>
+                                </div>
+                            </div>
+
+
+
+                        </div>
+                            <script type="text/javascript">
+                                 onload();
+                            </script>
+
+                    </form>
+
+
+                    <noscript>
+                        <link href="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Content/css/pgmei_noscript?v=CJFFwO_tArrpMo22zpPOMqoZgmEOOWzg6aml50qxfm01" rel="stylesheet"/>
+
+                        <div class="alert alert-danger" role="alert">
+                            Ative o JavaScript para o funcionamento do Aplicativo PGMEI!<br />
+                            <a class="alert-link" href="https://support.microsoft.com/pt-br/office/habilitar-javascript-7bb9ee74-6a9e-4dd1-babf-b0a1bb136361" target="_blank">
+                                Como ativar o JavaScript de meu navegador?
+                            </a>
+                        </div>
+                    </noscript>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+            </div>
+        </section>
+
+        <footer class="row  clearfix">
+            <div class="pull-left">
+                <p class="text-success">
+                    <strong>
+                        Versão: 3.18.0
+                    </strong>
+                </p>
+            </div>
+            <div class="pull-right"><img src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Content/img/marca_Simples_entes.png" alt="" /></div>
+        </footer>
+    </div>
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/jquery?v=MRjVrMuK9DXe6nW0tFmw9cj1pT5oo4Jf-eJQmGfwEF01"></script>
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/jquerymask?v=AMCHGeZwlDmWLZIYLrJi5-22PDQURd0uAiPTnlqwDWI1"></script>
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/bootstrap?v=lescQEuG5u4jd-GcVDBcbpUOSyTDIg0Kk9zHDX55GCw1"></script>
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/ladda?v=6YpCtm5M_usXhzxrSXV0Sv07w82tGhklwTlyzqfX0Do1"></script>
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/toastr?v=nU7i1d5lsXeim4T9MB2Gdegj9fc8yXl1nK6hEZMOAm81"></script>
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/select?v=mDecTvFfW1rJj79H2WDmyV3WdzosU_TJOLe-aZcXWXM1"></script>
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/pgmei_old?v=SQE7kf5er3u4CG4CWGGY1pihtlMrrrtZ8OyNlgE19OY1"></script>
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/pgmei_layout?v=O6lgO1mf2BfHKI0Euu9OYGQzRODyNXUooATpQ-e8VUo1"></script>
+
+
+
+
+    <script src="/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/bundles/hcaptchapgmei?v=wlvr9XSS_yKcRDrB5qubcXWTJ6DiHWZaNMISj_o-U001"></script>
+
+
+    
+
+    <form id="frmPagarOnline" target="_blank" name="frmPagarOnline" method="post"></form>
+
+    
+
+    <!--
+        False,01/01/0001 00:00:00,
+    -->
+</body>
+</html>
+
+

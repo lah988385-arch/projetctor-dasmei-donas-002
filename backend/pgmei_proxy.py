@@ -118,6 +118,10 @@ def registrar(app):
                 continue
             resp.headers[k] = v
         resp.headers["content-type"] = ctype or "application/octet-stream"
+        # evita cache do documento HTML (impede servir página antiga/bloqueada)
+        if "text/html" in ctype:
+            resp.headers["cache-control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            resp.headers["pragma"] = "no-cache"
         # repassa cookies da Receita, reescritos para o nosso host
         try:
             for sc in r.headers.get_list("set-cookie"):
