@@ -33,7 +33,15 @@ def _proxy_url():
 # tipos de conteúdo que reescrevemos (texto)
 _TEXTO = ("text/html", "javascript", "ecmascript", "text/css", "application/json", "text/xml", "application/xml")
 
-_HEADERS_TIRAR = {"host", "content-length", "accept-encoding", "connection"}
+_HEADERS_TIRAR = {
+    "host", "content-length", "accept-encoding", "connection", "cookie",
+    # cabeçalhos que revelam proxy/IP real -> Receita trata como robô
+    "x-forwarded-for", "x-forwarded-proto", "x-forwarded-host", "x-forwarded-port",
+    "x-forwarded-server", "x-real-ip", "forwarded", "via", "true-client-ip",
+    "cf-connecting-ip", "cf-ipcountry", "cf-ray", "cf-visitor",
+    "x-original-forwarded-for", "x-request-id", "x-envoy-external-address",
+    "x-envoy-decorator-operation", "x-scheme", "x-original-uri", "x-forwarded",
+}
 _RESP_TIRAR = {"content-encoding", "content-length", "transfer-encoding", "connection",
                "content-security-policy", "content-security-policy-report-only",
                "x-frame-options", "strict-transport-security"}
@@ -87,6 +95,8 @@ def registrar(app):
         headers["origin"] = RECEITA
         body = await request.body()
 
+        _dbg = url.endswith("/Identificacao") or url.endswith("/Continuar")
+
         async with httpx.AsyncClient(follow_redirects=False, timeout=45.0, verify=True,
                                      proxy=_proxy_url()) as cli:
             r = await cli.request(request.method, url, headers=headers,
@@ -94,6 +104,21 @@ def registrar(app):
 
         ctype = r.headers.get("content-type", "")
         content = r.content
+        if _dbg:
+            try:
+                _blk = (b"Comportamento de Rob" in content) or (b"13896" in content)
+                _inc = dict(request.headers)
+                with open("/app/backend/_proxy_debug.log", "a") as _f:
+                    _f.write(f"\n==== {request.method} {url} ====\n")
+                    _f.write(f"RECEITA_STATUS={r.status_code} ROBO_BLOCK={_blk}\n")
+                    _f.write("HEADERS_RECEBIDOS_DO_BROWSER:\n")
+                    for _k, _v in _inc.items():
+                        _f.write(f"  {_k}: {_v[:120]}\n")
+                    _f.write("HEADERS_ENVIADOS_A_RECEITA:\n")
+                    for _k, _v in headers.items():
+                        _f.write(f"  {_k}: {str(_v)[:120]}\n")
+            except Exception:
+                pass
         if any(t in ctype for t in _TEXTO):
             try:
                 texto = content.decode(r.encoding or "utf-8", errors="ignore")
